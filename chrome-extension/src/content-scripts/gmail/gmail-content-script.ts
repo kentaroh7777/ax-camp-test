@@ -81,6 +81,11 @@ export class GmailContentScript extends BaseContentScript {
       const timeElement = element.querySelector('.g3');
       const contentElement = element.querySelector('.ii.gt .a3s.aiL');
       
+      // 必須要素が見つからない場合はnullを返す
+      if (!subjectElement && !fromElement && !contentElement) {
+        throw new Error('Required Gmail message elements not found');
+      }
+      
       return {
         id: this.extractMessageId(element),
         subject: subjectElement?.textContent?.trim() || '',

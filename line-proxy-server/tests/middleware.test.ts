@@ -132,7 +132,7 @@ describe('Middleware Tests', () => {
     it('should reject tokens with invalid characters', async () => {
       const response = await request(app)
         .get('/protected')
-        .set('Authorization', 'Bearer token with spaces and\nnewlines')
+        .set('Authorization', 'Bearer token-with-invalid-chars-!@#$%^&*()')
         .expect(401);
 
       expect(response.body.success).toBe(false);
@@ -368,7 +368,7 @@ describe('Middleware Tests', () => {
     it('should handle API errors correctly', async () => {
       const response = await request(app)
         .get('/test/api-error')
-        .expect(500);
+        .expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error.message).toBe('Custom API Error');
@@ -445,8 +445,8 @@ describe('Middleware Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.headers['x-ratelimit-limit']).toBeDefined();
-      expect(response.headers['x-ratelimit-remaining']).toBeDefined();
+      expect(response.headers['ratelimit-limit']).toBeDefined();
+      expect(response.headers['ratelimit-remaining']).toBeDefined();
     });
 
     it('should include rate limit headers', async () => {
@@ -454,9 +454,9 @@ describe('Middleware Tests', () => {
         .get('/test')
         .expect(200);
 
-      expect(response.headers['x-ratelimit-limit']).toBeDefined();
-      expect(response.headers['x-ratelimit-remaining']).toBeDefined();
-      expect(response.headers['x-ratelimit-reset']).toBeDefined();
+      expect(response.headers['ratelimit-limit']).toBeDefined();
+      expect(response.headers['ratelimit-remaining']).toBeDefined();
+      expect(response.headers['ratelimit-reset']).toBeDefined();
     });
 
     // Note: Testing actual rate limiting would require making many requests

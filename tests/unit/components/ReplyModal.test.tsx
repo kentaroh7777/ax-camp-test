@@ -107,7 +107,9 @@ describe('ReplyModal', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('AI generated reply')).toBeInTheDocument();
+      // TextAreaで確認（編集領域）
+      const textArea = screen.getByPlaceholderText('返信内容を入力または編集してください');
+      expect(textArea).toHaveValue('AI generated reply');
     });
 
     expect(mockReplyAssistantService.generateReply).toHaveBeenCalledWith({
@@ -161,6 +163,7 @@ describe('ReplyModal', () => {
     });
 
     vi.mocked(mockReplyAssistantService.getRelatedMessages).mockResolvedValue([]);
+    mockOnSend.mockResolvedValue(); // Promise resolveを返すよう設定
 
     render(
       <ReplyModal
@@ -172,12 +175,19 @@ describe('ReplyModal', () => {
       />
     );
 
+    // AI生成完了まで待機
     await waitFor(() => {
-      const sendButton = screen.getByText('送信');
-      fireEvent.click(sendButton);
+      const textArea = screen.getByPlaceholderText('返信内容を入力または編集してください');
+      expect(textArea).toHaveValue('Reply to send');
     });
 
-    expect(mockOnSend).toHaveBeenCalledWith('Reply to send', mockMessage);
+    // 送信ボタンをクリック
+    const sendButton = screen.getByText('送信');
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(mockOnSend).toHaveBeenCalledWith('Reply to send', mockMessage);
+    });
   });
 
   it('handles cancel button click', () => {
@@ -227,7 +237,8 @@ describe('ReplyModal', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('First reply')).toBeInTheDocument();
+      const textArea = screen.getByPlaceholderText('返信内容を入力または編集してください');
+      expect(textArea).toHaveValue('First reply');
     });
 
     // Mock second generation
@@ -242,7 +253,8 @@ describe('ReplyModal', () => {
     fireEvent.click(regenerateButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Regenerated reply')).toBeInTheDocument();
+      const textArea = screen.getByPlaceholderText('返信内容を入力または編集してください');
+      expect(textArea).toHaveValue('Regenerated reply');
     });
   });
 

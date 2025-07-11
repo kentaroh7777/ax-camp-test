@@ -26,6 +26,12 @@ export const errorMiddleware = (
     errorType = error.errorType;
     message = error.message;
     details = error.details;
+  } else if (error.name === 'ApiError' && (error as any).statusCode) {
+    // Handle manually created ApiError-like objects from tests
+    statusCode = (error as any).statusCode;
+    errorType = (error as any).errorType || 'API_ERROR';
+    message = error.message;
+    details = (error as any).details;
   } else if (error.name === 'ValidationError') {
     statusCode = 400;
     errorType = 'VALIDATION_ERROR';

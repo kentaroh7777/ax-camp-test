@@ -20,11 +20,11 @@ Object.defineProperty(global, 'console', {
 
 describe('BackgroundTasksManager', () => {
   let tasksManager: BackgroundTasksManager;
-  let mockExecute: ReturnType<typeof vi.fn>;
+  let mockExecute: () => Promise<void>;
 
   beforeEach(() => {
     tasksManager = new BackgroundTasksManager();
-    mockExecute = vi.fn();
+    mockExecute = vi.fn().mockResolvedValue(undefined) as () => Promise<void>;
     vi.clearAllMocks();
     vi.useFakeTimers();
     
@@ -253,7 +253,7 @@ describe('BackgroundTasksManager', () => {
       const beforeRun = tasksManager.getTaskStatus()[0];
       expect(beforeRun.lastRun).toBeUndefined();
 
-      vi.advanceTimersByTime(1000);
+      await vi.advanceTimersByTimeAsync(1000);
 
       const afterRun = tasksManager.getTaskStatus()[0];
       expect(afterRun.lastRun).toBeInstanceOf(Date);
@@ -273,7 +273,7 @@ describe('BackgroundTasksManager', () => {
       tasksManager.registerTask(task);
       tasksManager.startTask('error-task');
 
-      vi.advanceTimersByTime(1000);
+      await vi.advanceTimersByTimeAsync(1000);
 
       expect(errorExecute).toHaveBeenCalledTimes(1);
       expect(mockConsole.error).toHaveBeenCalledWith(
@@ -286,7 +286,7 @@ describe('BackgroundTasksManager', () => {
       expect(status[0].isRunning).toBe(true);
 
       // Should continue to execute
-      vi.advanceTimersByTime(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(errorExecute).toHaveBeenCalledTimes(2);
     });
   });
@@ -427,7 +427,7 @@ describe('BackgroundTasksManager', () => {
       expect(status[0].execute).toBeUndefined();
     });
 
-    it('should return current status including lastRun', () => {
+    it('should return current status including lastRun', async () => {
       const task: BackgroundTask = {
         id: 'status-task',
         name: 'Status Task',
@@ -439,7 +439,7 @@ describe('BackgroundTasksManager', () => {
       tasksManager.registerTask(task);
       tasksManager.startTask('status-task');
 
-      vi.advanceTimersByTime(1000);
+      await vi.advanceTimersByTimeAsync(1000);
 
       const status = tasksManager.getTaskStatus();
       expect(status[0].lastRun).toBeInstanceOf(Date);

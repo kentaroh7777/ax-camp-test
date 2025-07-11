@@ -115,7 +115,19 @@ describe('SettingsModal', () => {
   });
 
   it('handles save button click', async () => {
-    vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
+    // フォーム検証を成功させるための完全な設定
+    const validSettings = {
+      ...mockSettings,
+      general: {
+        language: 'ja', // 必須フィールド
+        theme: 'light',
+        autoFetch: true,
+        fetchInterval: 5,
+        maxMessageHistory: 1000,
+      }
+    };
+    
+    vi.mocked(mockSettingsService.getSettings).mockResolvedValue(validSettings);
     vi.mocked(mockSettingsService.updateSettings).mockResolvedValue();
 
     render(
@@ -127,15 +139,26 @@ describe('SettingsModal', () => {
       />
     );
 
+    // フォームが完全に読み込まれるまで待機
     await waitFor(() => {
-      const saveButton = screen.getByText('保存');
-      fireEvent.click(saveButton);
-    });
+      expect(screen.getByText('言語')).toBeInTheDocument();
+      expect(mockSettingsService.getSettings).toHaveBeenCalled();
+    }, { timeout: 3000 });
+
+    // フォームが安定するまで待機
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // 保存ボタンをクリック前にupdateSettingsの呼び出しをリセット
+    vi.mocked(mockSettingsService.updateSettings).mockClear();
+    
+    // 保存ボタンをクリック
+    const saveButton = screen.getByText('保存');
+    fireEvent.click(saveButton);
 
     await waitFor(() => {
       expect(mockSettingsService.updateSettings).toHaveBeenCalled();
       expect(mockOnCancel).toHaveBeenCalled();
-    });
+    }, { timeout: 3000 });
   });
 
   it('handles cancel button click', async () => {

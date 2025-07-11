@@ -3,9 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ErrorHandlerService, ErrorLog } from '../../../chrome-extension/src/services/infrastructure/error-handler.service';
 import { IChromeStorageRepository } from '../../../chrome-extension/src/types/infrastructure/storage.types';
 
-// Mock crypto.randomUUID to return unique values
-let uuidCounter = 0;
-vi.spyOn(crypto, 'randomUUID').mockImplementation(() => `test-uuid-${++uuidCounter}`);
+// Note: crypto.randomUUID mock is set per test as needed to avoid conflicts
 
 // Mock console methods
 const mockConsole = {
@@ -44,9 +42,7 @@ describe('ErrorHandlerService', () => {
     mockConsole.warn.mockClear();
     mockConsole.info.mockClear();
     
-    // Reset crypto.randomUUID mock
-    uuidCounter = 0;
-    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => `test-uuid-${++uuidCounter}`);
+    // Note: crypto.randomUUID mock is set per test to avoid conflicts
   });
 
   describe('logError', () => {
@@ -377,10 +373,30 @@ describe('ErrorHandlerService', () => {
 
   describe('ID generation', () => {
     it('should generate unique IDs', async () => {
+      // Clear any existing mock and create fresh one
+      if (vi.isMockFunction(crypto.randomUUID)) {
+        (crypto.randomUUID as any).mockRestore();
+      }
+      
+      let callCount = 0;
+      const uniqueMock = vi.spyOn(crypto, 'randomUUID').mockImplementation(() => {
+        callCount++;
+        const id = `12345678-1234-5678-9012-${String(callCount).padStart(12, '0')}`;
+        return id as `${string}-${string}-${string}-${string}-${string}`;
+      });
+      
+      // Create realistic storage simulation
+      let storedLogs: any[] = [];
+      mockStorageRepository.get = vi.fn().mockImplementation(async (key: string) => {
+        return storedLogs.slice(); // Return copy of current logs
+      });
+      
+      mockStorageRepository.save = vi.fn().mockImplementation(async (key: string, data: any[]) => {
+        storedLogs = data.slice(); // Update stored logs
+      });
+      
       const error1 = new Error('Error 1');
       const error2 = new Error('Error 2');
-
-      mockStorageRepository.get = vi.fn().mockResolvedValue([]);
 
       await errorHandler.logError(error1);
       await errorHandler.logError(error2);
@@ -388,9 +404,15 @@ describe('ErrorHandlerService', () => {
       const call1 = (mockStorageRepository.save as any).mock.calls[0][1];
       const call2 = (mockStorageRepository.save as any).mock.calls[1][1];
 
-      expect(call1[0].id).not.toBe(call2[0].id);
+      expect(call1[0].id).not.toBe(call2[1].id);
       expect(call1[0].id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
-      expect(call2[0].id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+      expect(call2[1].id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+      
+      // Verify actual different values
+      expect(call1[0].id).toBe('12345678-1234-5678-9012-000000000001');
+      expect(call2[1].id).toBe('12345678-1234-5678-9012-000000000002'); // call2[1] because logs accumulate
+      
+      uniqueMock.mockRestore();
     });
   });
 

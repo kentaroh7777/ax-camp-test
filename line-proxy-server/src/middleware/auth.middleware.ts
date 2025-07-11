@@ -54,8 +54,17 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
       );
     }
 
-    // Check for potentially malicious tokens
+    // Check for potentially malicious tokens and invalid characters
     if (token.includes(' ') || token.includes('\n') || token.includes('\r')) {
+      throw new ApiError(
+        'Invalid access token format',
+        401,
+        'INVALID_ACCESS_TOKEN'
+      );
+    }
+
+    // Check for invalid characters in token (LINE tokens are typically alphanumeric with - and _)
+    if (!/^[A-Za-z0-9_-]+$/.test(token)) {
       throw new ApiError(
         'Invalid access token format',
         401,

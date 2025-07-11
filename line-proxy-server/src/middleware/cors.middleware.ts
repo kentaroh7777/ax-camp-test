@@ -8,8 +8,8 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
   
   // Define allowed origins
   const allowedOrigins = [
-    // Chrome extension origins
-    /^chrome-extension:\/\/[a-z]{32}$/,
+    // Chrome extension origins (32 characters typically, but allow flexibility)
+    /^chrome-extension:\/\/[a-z0-9]{16,64}$/,
     /^moz-extension:\/\/[a-z0-9-]+$/,
     
     // Development origins
