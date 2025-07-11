@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    include: ['chrome-extension/src/**/*.{test,spec}.{js,ts,tsx}', 'tests/**/*.{test,spec}.{js,ts}'],
+    include: ['chrome-extension/src/**/*.{test,spec}.{js,ts,tsx}', 'tests/**/*.{test,spec}.{js,ts,tsx}'],
     exclude: ['node_modules', 'dist', '**/*.d.ts'],
     coverage: {
       provider: 'v8',
