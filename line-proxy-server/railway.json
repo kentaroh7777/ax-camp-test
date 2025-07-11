@@ -1,0 +1,87 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "nixpacks",
+    "buildCommand": "npm run build",
+    "watchPatterns": [
+      "src/**/*",
+      "package.json",
+      "tsconfig.json"
+    ]
+  },
+  "deploy": {
+    "startCommand": "npm start",
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10,
+    "numReplicas": 1
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "NODE_ENV": "production",
+        "LOG_LEVEL": "info",
+        "PORT": "$PORT",
+        "HOST": "0.0.0.0",
+        "LINE_API_TIMEOUT": "30000",
+        "RATE_LIMIT_MAX_REQUESTS": "1000",
+        "RATE_LIMIT_STRICT_MAX": "100",
+        "RATE_LIMIT_MESSAGE_MAX": "50",
+        "CIRCUIT_BREAKER_ENABLED": "true",
+        "CIRCUIT_BREAKER_FAILURE_THRESHOLD": "5",
+        "CIRCUIT_BREAKER_RESET_TIMEOUT": "30000",
+        "HEALTH_CHECK_ENABLED": "true",
+        "HEALTH_CHECK_INTERVAL": "30000",
+        "LOG_FILE_ENABLED": "false",
+        "LOG_CONSOLE_ENABLED": "true",
+        "METRICS_ENABLED": "true",
+        "PERFORMANCE_MONITORING_ENABLED": "true",
+        "ERROR_TRACKING_ENABLED": "true",
+        "AUTH_REQUIRE_HTTPS": "true",
+        "SECURITY_HEADERS_ENABLED": "true",
+        "WEBHOOK_SIGNATURE_VALIDATION": "true",
+        "FEATURE_LINE_API_PROXY": "true",
+        "FEATURE_WEBHOOK_SUPPORT": "true",
+        "FEATURE_HEALTH_CHECKS": "true",
+        "FEATURE_METRICS_COLLECTION": "true",
+        "FEATURE_CIRCUIT_BREAKER": "true",
+        "FEATURE_DEBUG_MODE": "false",
+        "FEATURE_REQUEST_LOGGING": "true"
+      }
+    },
+    "staging": {
+      "variables": {
+        "NODE_ENV": "staging",
+        "LOG_LEVEL": "debug",
+        "PORT": "$PORT",
+        "HOST": "0.0.0.0",
+        "LINE_API_TIMEOUT": "30000",
+        "RATE_LIMIT_MAX_REQUESTS": "5000",
+        "RATE_LIMIT_STRICT_MAX": "500",
+        "RATE_LIMIT_MESSAGE_MAX": "250",
+        "CIRCUIT_BREAKER_ENABLED": "true",
+        "HEALTH_CHECK_ENABLED": "true",
+        "LOG_CONSOLE_ENABLED": "true",
+        "METRICS_ENABLED": "true",
+        "FEATURE_LINE_API_PROXY": "true",
+        "FEATURE_WEBHOOK_SUPPORT": "true",
+        "FEATURE_DEBUG_MODE": "true",
+        "FEATURE_BETA_FEATURES": "true",
+        "FEATURE_EXPERIMENTAL_ENDPOINTS": "true"
+      }
+    }
+  },
+  "services": [
+    {
+      "name": "line-proxy-server",
+      "settings": {
+        "autoDeploy": true,
+        "branches": ["main", "staging"],
+        "buildWatchPatterns": [
+          "line-proxy-server/**/*"
+        ]
+      }
+    }
+  ]
+}
