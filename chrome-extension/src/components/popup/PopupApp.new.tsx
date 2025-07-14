@@ -11,6 +11,7 @@ import { UserMappingService } from '../../services/application/user-mapping.serv
 import { LLMIntegrationService } from '../../services/application/llm-integration.service';
 import { MessageClientFactory } from '../../services/channel/base/message-client.factory';
 import { ChromeStorageRepository } from '../../services/infrastructure/chrome-storage.repository';
+import { AuthTokenManager } from '../../services/infrastructure/auth-token.manager';
 import { SendMessageParams } from '../../types/core/message.types';
 import { ChannelType } from '../../types/core/channel.types';
 import './PopupApp.styles.css';
@@ -29,7 +30,8 @@ const PopupApp: React.FC<PopupAppProps> = () => {
 
   // Initialize services
   const chromeStorageRepository = new ChromeStorageRepository();
-  const messageClientFactory = new MessageClientFactory(chromeStorageRepository);
+  const authTokenManager = new AuthTokenManager(chromeStorageRepository);
+  const messageClientFactory = new MessageClientFactory(authTokenManager);
   const userMappingService = new UserMappingService(chromeStorageRepository);
   const llmService = new LLMIntegrationService(chromeStorageRepository);
   const replyAssistantService = new ReplyAssistantService(

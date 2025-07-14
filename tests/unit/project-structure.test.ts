@@ -12,7 +12,7 @@ describe('プロジェクト基盤構築', () => {
     expect(manifest.name).toBe('Multi-Channel Reply Assistant')
     expect(manifest.permissions).toContain('storage')
     expect(manifest.permissions).toContain('identity')
-    expect(manifest.background.service_worker).toBe('dist/background/service-worker.js')
+    expect(manifest.background.service_worker).toBe('background/service-worker.js')
   })
 
   it('package.jsonにテストスクリプトが設定されている', () => {

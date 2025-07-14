@@ -7,41 +7,39 @@
   "permissions": [
     "storage",
     "identity",
-    "activeTab",
-    "https://gmail.com/*",
+    "activeTab"
+  ],
+  
+  "host_permissions": [
+    "https://mail.google.com/*",
     "https://discord.com/*",
     "https://line.me/*"
   ],
   
   "background": {
-    "service_worker": "dist/background/service-worker.js"
+    "service_worker": "background/service-worker.js"
   },
   
   "content_scripts": [
     {
       "matches": ["https://mail.google.com/*"],
-      "js": ["dist/content-scripts/gmail.js"],
-      "css": ["dist/content-scripts/gmail.css"]
+      "js": ["content-scripts/gmail.js"]
     },
     {
       "matches": ["https://discord.com/*"],
-      "js": ["dist/content-scripts/discord.js"],
-      "css": ["dist/content-scripts/discord.css"]
+      "js": ["content-scripts/discord.js"]
     },
     {
       "matches": ["https://line.me/*"],
-      "js": ["dist/content-scripts/line.js"],
-      "css": ["dist/content-scripts/line.css"]
+      "js": ["content-scripts/line.js"]
     }
   ],
   
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
+    "default_popup": "popup.html"
+  },
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
   }
 }

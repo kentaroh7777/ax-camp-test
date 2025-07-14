@@ -63,11 +63,11 @@ export class UserMappingService implements IUserMappingService {
       
       switch (message.channel) {
         case ChannelType.GMAIL:
-          return message.from.includes(channelInfo.email);
+          return 'email' in channelInfo && message.from.includes(channelInfo.email);
         case ChannelType.DISCORD:
-          return message.from.includes(channelInfo.username);
+          return 'username' in channelInfo && message.from.includes(channelInfo.username);
         case ChannelType.LINE:
-          return message.from === channelInfo.userId;
+          return 'userId' in channelInfo && message.from === channelInfo.userId;
         default:
           return false;
       }
