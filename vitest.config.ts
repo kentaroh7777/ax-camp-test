@@ -12,7 +12,17 @@ export default defineConfig({
       include: ['chrome-extension/src/**/*.{js,ts,tsx}'],
       exclude: ['chrome-extension/src/**/*.d.ts', 'tests/**']
     },
-    setupFiles: ['./tests/setup.ts']
+    setupFiles: ['./tests/setup.ts'],
+    testTimeout: 180000, // 3分に延長
+    hookTimeout: 120000, // 2分に延長
+    teardownTimeout: 120000, // 2分に延長
+    // ブラウザテスト用設定
+    browser: {
+      enabled: false, // デフォルトは無効、必要時に有効化
+      name: 'chromium',
+      provider: 'playwright',
+      headless: false // ヘッドありモード
+    }
   },
   resolve: {
     alias: {

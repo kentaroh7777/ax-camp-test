@@ -1,0 +1,206 @@
+{
+  "test": {
+    "name": "Gmail新着メッセージ表示テスト",
+    "version": "1.0.0",
+    "startTime": "2025-07-15T06:32:37.594Z",
+    "endTime": "2025-07-15T06:32:41.808Z",
+    "duration": 4214
+  },
+  "environment": {
+    "nodeVersion": "v23.7.0",
+    "platform": "darwin",
+    "architecture": "x64",
+    "memoryUsage": {
+      "rss": 33923072,
+      "heapTotal": 6045696,
+      "heapUsed": 4712888,
+      "external": 1503506,
+      "arrayBuffers": 10515
+    }
+  },
+  "summary": {
+    "passed": 16,
+    "failed": 1,
+    "total": 17,
+    "successRate": 94.11764705882352,
+    "overallResult": "ERROR"
+  },
+  "testCases": [
+    {
+      "name": "Gmail Service 初期化",
+      "duration": 0,
+      "passed": true
+    },
+    {
+      "name": "Gmail 認証",
+      "duration": 1204,
+      "passed": true
+    }
+  ],
+  "logs": {
+    "summary": {
+      "info": 6,
+      "step": 3,
+      "success": 18,
+      "debug": 2,
+      "error": 3
+    },
+    "entries": [
+      {
+        "timestamp": "2025-07-15T06:32:37.700Z",
+        "level": "info",
+        "message": "Gmail認証実行中...",
+        "data": null,
+        "elapsed": "106ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:38.701Z",
+        "level": "success",
+        "message": "Gmail認証成功",
+        "data": null,
+        "elapsed": "1107ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:38.702Z",
+        "level": "success",
+        "message": "✓ 認証が成功",
+        "data": null,
+        "elapsed": "1108ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:38.702Z",
+        "level": "success",
+        "message": "✓ 認証トークンが取得できた",
+        "data": null,
+        "elapsed": "1108ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:38.702Z",
+        "level": "debug",
+        "message": "Gmail認証状態確認",
+        "data": null,
+        "elapsed": "1108ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:38.803Z",
+        "level": "success",
+        "message": "✓ 認証後の状態が正しい",
+        "data": null,
+        "elapsed": "1209ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:38.803Z",
+        "level": "step",
+        "message": "3. メッセージ取得テスト",
+        "data": null,
+        "elapsed": "1209ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:38.804Z",
+        "level": "info",
+        "message": "Gmail新着メッセージ取得開始",
+        "data": {
+          "limit": 5,
+          "unreadOnly": true,
+          "query": ""
+        },
+        "elapsed": "1210ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:40.305Z",
+        "level": "success",
+        "message": "Gmail新着メッセージ取得成功: 3件",
+        "data": null,
+        "elapsed": "2711ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:40.305Z",
+        "level": "success",
+        "message": "✓ メッセージ取得が成功",
+        "data": null,
+        "elapsed": "2711ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:40.305Z",
+        "level": "success",
+        "message": "✓ 期待されるメッセージ数が取得できた",
+        "data": null,
+        "elapsed": "2711ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:40.305Z",
+        "level": "success",
+        "message": "✓ メッセージIDが存在",
+        "data": null,
+        "elapsed": "2711ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:40.305Z",
+        "level": "success",
+        "message": "✓ 送信者が存在",
+        "data": null,
+        "elapsed": "2711ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:40.305Z",
+        "level": "success",
+        "message": "✓ 件名が存在",
+        "data": null,
+        "elapsed": "2711ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:40.305Z",
+        "level": "success",
+        "message": "✓ タイムスタンプが存在",
+        "data": null,
+        "elapsed": "2711ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:40.306Z",
+        "level": "success",
+        "message": "✓ チャンネルが正しい",
+        "data": null,
+        "elapsed": "2711ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:40.306Z",
+        "level": "info",
+        "message": "Gmail新着メッセージ取得開始",
+        "data": {
+          "limit": 10,
+          "unreadOnly": true,
+          "query": "プロジェクト"
+        },
+        "elapsed": "2711ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:41.807Z",
+        "level": "error",
+        "message": "Gmail新着メッセージ取得失敗",
+        "data": null,
+        "elapsed": "4213ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:41.808Z",
+        "level": "error",
+        "message": "✗ 検索クエリが成功",
+        "data": {
+          "expected": true,
+          "actual": false
+        },
+        "elapsed": "4213ms"
+      },
+      {
+        "timestamp": "2025-07-15T06:32:41.808Z",
+        "level": "error",
+        "message": "テスト実行中にエラー: Cannot read properties of undefined (reading 'length')",
+        "data": null,
+        "elapsed": "4214ms"
+      }
+    ]
+  },
+  "error": {
+    "message": "Cannot read properties of undefined (reading 'length')",
+    "stack": "TypeError: Cannot read properties of undefined (reading 'length')\n    at GmailMessageDisplayTest.testMessageRetrieval (/Users/taroken/src/git/ax-camp-test/tests/integration/ai-self-test.js:566:52)\n    at async GmailMessageDisplayTest.run (/Users/taroken/src/git/ax-camp-test/tests/integration/ai-self-test.js:462:7)\n    at async main (/Users/taroken/src/git/ax-camp-test/tests/integration/ai-self-test.js:811:21)"
+  }
+}

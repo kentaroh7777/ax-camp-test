@@ -114,6 +114,11 @@ export class GmailService extends BaseMessageClient {
   
   async authenticate(credentials?: any): Promise<AuthResult> {
     try {
+      // 非Chrome拡張機能環境での認証（テスト・結合テスト用）
+      if (typeof chrome === 'undefined' || !chrome.identity) {
+        return this.authenticateNonExtension(credentials);
+      }
+
       // Use Chrome Identity API for OAuth 2.0 authentication
       const authUrl = `https://accounts.google.com/oauth/authorize?` +
         `client_id=${process.env.GMAIL_CLIENT_ID}&` +
@@ -176,6 +181,85 @@ export class GmailService extends BaseMessageClient {
         success: false,
         error: {
           code: 'GMAIL_AUTH_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+      };
+    }
+  }
+
+  /**
+   * 非Chrome拡張機能環境での認証（テスト・結合テスト用）
+   * @param credentials - 認証情報（アクセストークンまたはリフレッシュトークン）
+   */
+  private async authenticateNonExtension(credentials?: any): Promise<AuthResult> {
+    try {
+      // 直接アクセストークンが提供された場合
+      if (credentials?.accessToken) {
+        const authToken = {
+          accessToken: credentials.accessToken,
+          refreshToken: credentials.refreshToken,
+          expiresAt: credentials.expiresAt || new Date(Date.now() + 3600 * 1000),
+          scope: credentials.scope || ['https://www.googleapis.com/auth/gmail.readonly'],
+          tokenType: 'Bearer' as const,
+        };
+
+        await this.authTokenManager.saveToken(ChannelType.GMAIL, authToken);
+        
+        return {
+          success: true,
+          token: authToken.accessToken,
+          expiresAt: authToken.expiresAt,
+        };
+      }
+
+      // .env.localから設定を読み込んでリフレッシュトークンフローを実行
+      if (credentials?.refreshToken || process.env.GMAIL_REFRESH_TOKEN) {
+        const refreshToken = credentials?.refreshToken || process.env.GMAIL_REFRESH_TOKEN;
+        
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+            client_id: process.env.GMAIL_CLIENT_ID!,
+            client_secret: process.env.GMAIL_CLIENT_SECRET!,
+          }),
+        });
+
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json();
+          throw new Error(`Token refresh failed: ${errorData.error_description || errorData.error}`);
+        }
+
+        const tokenData = await tokenResponse.json();
+
+        const authToken = {
+          accessToken: tokenData.access_token,
+          refreshToken: refreshToken,
+          expiresAt: new Date(Date.now() + tokenData.expires_in * 1000),
+          scope: tokenData.scope?.split(' ') || ['https://www.googleapis.com/auth/gmail.readonly'],
+          tokenType: 'Bearer' as const,
+        };
+
+        await this.authTokenManager.saveToken(ChannelType.GMAIL, authToken);
+
+        return {
+          success: true,
+          token: authToken.accessToken,
+          expiresAt: authToken.expiresAt,
+        };
+      }
+
+      throw new Error('非Chrome拡張機能環境では、accessTokenまたはrefreshTokenが必要です。');
+      
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          code: 'GMAIL_AUTH_NON_EXTENSION_ERROR',
           message: error instanceof Error ? error.message : 'Unknown error',
         },
       };

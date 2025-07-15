@@ -5,6 +5,8 @@ import { IAuthTokenManager, AuthToken } from '../../types/infrastructure/auth.ty
 import { IChromeStorageRepository } from '../../types/infrastructure/storage.types';
 import { ChannelType } from '../../types/core/channel.types';
 import { STORAGE_KEYS } from '../../types/infrastructure/storage.types';
+import { ChromeStorageRepository } from './chrome-storage.repository';
+import { FileStorageRepository } from './file-storage.repository';
 
 export class AuthTokenManager implements IAuthTokenManager {
   private readonly storageRepository: IChromeStorageRepository;

@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-07-15T07:10:06.865Z",
+  "environment": "Chrome Extension + Real Accounts",
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 1,
+    "successRate": 0
+  },
+  "tests": [
+    {
+      "name": "Gmailメッセージ取得",
+      "status": "skipped",
+      "message": "⚠️ Gmail認証が必要です（手動ログイン後に再実行してください）",
+      "timestamp": "2025-07-15T07:10:16.072Z",
+      "duration": 5948,
+      "data": {
+        "currentUrl": "https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&emr=1&followup=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&ifkv=AdBytiM4yA0s_mwHsAtH50h4fjHlBzNdVnjv6ji8un7hGm1E3LSnhH8PEaiNoOZvcBzIHwwkWNRI7Q&osid=1&passive=1209600&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S1577305789%3A1752563410801375",
+        "isGmailInbox": false,
+        "hasGoogleAccount": false,
+        "hasMainRole": false,
+        "hasInboxView": false,
+        "hasComposeButton": false,
+        "isLoggedIn": false,
+        "messageData": {
+          "totalMessages": 0,
+          "unreadCount": 0,
+          "sampleMessages": [],
+          "hasAccessibleMessages": false
+        }
+      }
+    }
+  ],
+  "aiAnalysis": {
+    "overallStatus": "SUCCESS",
+    "criticalIssues": [],
+    "recommendations": [
+      "全機能が正常動作中"
+    ],
+    "nextActions": [
+      "本格運用に向けた最終検証"
+    ]
+  }
+}

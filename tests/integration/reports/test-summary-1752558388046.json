@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-07-15T05:46:28.046Z",
+  "runnerVersion": "1.0.0",
+  "environment": {
+    "nodeVersion": "v23.7.0",
+    "platform": "darwin",
+    "architecture": "x64"
+  },
+  "config": {
+    "testScripts": [
+      {
+        "name": "Gmail新着メッセージ表示テスト",
+        "script": "tests/integration/ai-self-test.js",
+        "timeout": 60000,
+        "retries": 3,
+        "enabled": true
+      },
+      {
+        "name": "Gmail Service ユニットテスト",
+        "script": "tests/unit/channel/gmail.service.test.ts",
+        "timeout": 30000,
+        "retries": 2,
+        "enabled": true
+      }
+    ],
+    "reportDir": "tests/integration/reports",
+    "notifications": {
+      "enabled": true,
+      "onFailure": true,
+      "onSuccess": false
+    },
+    "parallel": true,
+    "maxConcurrency": 3
+  },
+  "results": [
+    {
+      "name": "Gmail新着メッセージ表示テスト",
+      "success": true,
+      "duration": 16501,
+      "stdout": "🤖 AI自己テスト対応 Gmail新着メッセージ表示テスト\n====================================================\n🔍 [2ms] === Gmail新着メッセージ表示テスト 開始 ===\n🔍 [2ms] バージョン: 1.0.0\n🔍 [3ms] 実行環境: Node.js v23.7.0\n📋 [3ms] 1. Gmail Service 初期化テスト\n✅ [3ms] ✓ チャンネルタイプが正しい\n✅ [3ms] ✓ チャンネル名が正しい\n✅ [3ms] ✓ 接続状態が正しい\n✅ [4ms] ✓ 最終同期時刻が設定されている\n✅ [4ms] ✓ レート制限が適切\n📋 [5ms] 2. Gmail 認証テスト\n🐛 [5ms] Gmail認証状態確認\n✅ [107ms] ✓ 初期認証状態が正しい\n🔍 [107ms] Gmail認証実行中...\n✅ [1109ms] Gmail認証成功\n✅ [1109ms] ✓ 認証が成功\n✅ [1109ms] ✓ 認証トークンが取得できた\n🐛 [1109ms] Gmail認証状態確認\n✅ [1210ms] ✓ 認証後の状態が正しい\n📋 [1210ms] 3. メッセージ取得テスト\n🔍 [1210ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m5\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n✅ [2712ms] Gmail新着メッセージ取得成功: 3件\n✅ [2712ms] ✓ メッセージ取得が成功\n✅ [2712ms] ✓ 期待されるメッセージ数が取得できた\n✅ [2712ms] ✓ メッセージIDが存在\n✅ [2712ms] ✓ 送信者が存在\n✅ [2712ms] ✓ 件名が存在\n✅ [2712ms] ✓ タイムスタンプが存在\n✅ [2712ms] ✓ チャンネルが正しい\n🔍 [2712ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m10\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m'プロジェクト'\u001b[39m }\n✅ [4215ms] Gmail新着メッセージ取得成功: 1件\n✅ [4215ms] ✓ 検索クエリが成功\n✅ [4215ms] ✓ 検索結果が存在\n📋 [4215ms] 4. メッセージフィルタリングテスト\n🔍 [4216ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m2\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n✅ [5718ms] Gmail新着メッセージ取得成功: 2件\n✅ [5718ms] ✓ 件数制限が正しく動作\n🔍 [5718ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m10\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n✅ [7221ms] Gmail新着メッセージ取得成功: 3件\n✅ [7221ms] ✓ 未読フィルタが成功\n✅ [7221ms] ✓ メッセージ1が未読\n✅ [7221ms] ✓ メッセージ2が未読\n✅ [7221ms] ✓ メッセージ3が未読\n🔍 [7221ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m10\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m'システム'\u001b[39m }\n✅ [8722ms] Gmail新着メッセージ取得成功: 1件\n✅ [8722ms] ✓ 検索フィルタが成功\n✅ [8722ms] ✓ 検索結果が正しい\n📋 [8723ms] 5. 統合受信箱テスト\n🔍 [8723ms] 統合受信箱: 全チャンネル新着メッセージ取得開始\n🔍 [8723ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m10\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n✅ [10225ms] Gmail新着メッセージ取得成功: 3件\n✅ [10225ms] 統合受信箱: 3件のメッセージ取得完了\n✅ [10225ms] ✓ 統合受信箱が成功\n✅ [10225ms] ✓ メッセージが取得できた\n✅ [10225ms] ✓ Gmailチャンネル結果が存在\n✅ [10225ms] ✓ Gmailチャンネルが成功\n✅ [10225ms] ✓ メッセージ1が正しい順序\n✅ [10225ms] ✓ メッセージ2が正しい順序\n📋 [10225ms] 6. AI返信案生成テスト\n🔍 [10225ms] AI返信案生成開始\n{ tone: \u001b[32m'formal'\u001b[39m, includeContext: \u001b[33mtrue\u001b[39m }\n✅ [12226ms] AI返信案生成成功\n✅ [12227ms] ✓ AI返信案生成が成功\n✅ [12227ms] ✓ 返信案が生成された\n✅ [12227ms] ✓ 信頼度が十分\n✅ [12227ms] ✓ トークン使用数が記録された\n✅ [12227ms] ✓ 送信者名が含まれている\n✅ [12227ms] ✓ 適切な挨拶が含まれている\n🔍 [12227ms] AI返信案生成開始\n{ tone: \u001b[32m'casual'\u001b[39m, includeContext: \u001b[33mtrue\u001b[39m }\n✅ [14228ms] AI返信案生成成功\n✅ [14228ms] ✓ カジュアルトーンが成功\n✅ [14228ms] ✓ カジュアル返信案が生成された\n📋 [14229ms] 7. エラーハンドリングテスト\n🔍 [14229ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m10\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n✅ [14229ms] ✓ 未認証時にエラーが発生\n✅ [14229ms] ✓ エラー情報が存在\n✅ [14229ms] ✓ エラーコードが正しい\n🔍 [14229ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m10\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n✅ [14229ms] ✓ Rate Limit時にエラーが発生\n✅ [14229ms] ✓ Rate Limitエラーが正しい\n📋 [14230ms] 8. パフォーマンステスト\n🔍 [14230ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m3\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n🔍 [14230ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m3\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n🔍 [14230ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m3\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n🔍 [14230ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m3\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n🔍 [14230ms] Gmail新着メッセージ取得開始\n{ limit: \u001b[33m3\u001b[39m, unreadOnly: \u001b[33mtrue\u001b[39m, query: \u001b[32m''\u001b[39m }\n✅ [15732ms] Gmail新着メッセージ取得成功: 3件\n✅ [15732ms] Gmail新着メッセージ取得成功: 3件\n✅ [15732ms] Gmail新着メッセージ取得成功: 3件\n✅ [15732ms] Gmail新着メッセージ取得成功: 3件\n✅ [15732ms] Gmail新着メッセージ取得成功: 3件\n✅ [15732ms] ✓ 並列処理がすべて成功\n✅ [15732ms] ✓ 並列処理が10秒以内に完了\n✅ [15732ms] ✓ API呼び出し回数が正しい\n🔍 [15733ms] === Gmail新着メッセージ表示テスト 完了 ===\n🔍 [15733ms] 実行時間: 15733ms\n🔍 [15733ms] テスト結果: 47/47 (100.0%)\n🔍 [15734ms] テストレポート保存完了: /Users/taroken/src/git/ax-camp-test/tests/integration/ai-self-test-report.json\n🔍 [15735ms] CSV レポート保存完了: /Users/taroken/src/git/ax-camp-test/tests/integration/ai-self-test-results.csv\n\n🎉 すべてのテストが成功しました！\n",
+      "stderr": null
+    },
+    {
+      "name": "Gmail Service ユニットテスト",
+      "success": false,
+      "duration": 0,
+      "error": "(node:54102) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\nnode:internal/modules/esm/resolve:275\n    throw new ERR_MODULE_NOT_FOUND(\n          ^\n\nError [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/taroken/src/git/ax-camp-test/chrome-extension/src/services/channel/gmail/gmail.service' imported from /Users/taroken/src/git/ax-camp-test/tests/unit/channel/gmail.service.test.ts\n    at finalizeResolution (node:internal/modules/esm/resolve:275:11)\n    at moduleResolve (node:internal/modules/esm/resolve:860:10)\n    at defaultResolve (node:internal/modules/esm/resolve:984:11)\n    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:719:12)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:643:25)\n    at ModuleLoader.resolve (node:internal/modules/esm/loader:626:38)\n    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:279:38)\n    at ModuleJob._link (node:internal/modules/esm/module_job:136:49) {\n  code: 'ERR_MODULE_NOT_FOUND',\n  url: 'file:///Users/taroken/src/git/ax-camp-test/chrome-extension/src/services/channel/gmail/gmail.service'\n}\n\nNode.js v23.7.0\n",
+      "retries": 2
+    }
+  ],
+  "summary": {
+    "totalTests": 2,
+    "passed": 1,
+    "failed": 1,
+    "totalDuration": 52632,
+    "successRate": 50
+  }
+}

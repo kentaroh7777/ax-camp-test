@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail新着メッセージ表示テスト</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .message-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .sender {
+            font-weight: bold;
+            color: #0066cc;
+        }
+        .time {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .subject {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .content {
+            color: #555;
+            line-height: 1.4;
+        }
+        .channel-badge {
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+        .stats {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Gmail新着メッセージ表示テスト</h1>
+        
+        <div id="status" class="status info">
+            🔍 テスト準備中...
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button id="startTest" onclick="startGmailTest()">
+                📬 Gmail新着メッセージ取得開始
+            </button>
+            <button id="refreshTest" onclick="refreshTest()" disabled>
+                🔄 更新
+            </button>
+        </div>
+        
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Gmail新着メッセージ取得中...</p>
+        </div>
+        
+        <div id="messages" style="display: none;">
+            <h2>📨 新着メッセージ</h2>
+            <div id="messageList"></div>
+        </div>
+        
+        <div id="stats" class="stats" style="display: none;">
+            <h3>📊 統計情報</h3>
+            <div id="statsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Chrome拡張機能のテスト関数
+        async function startGmailTest() {
+            const statusDiv = document.getElementById('status');
+            const loadingDiv = document.getElementById('loading');
+            const messagesDiv = document.getElementById('messages');
+            const statsDiv = document.getElementById('stats');
+            const startButton = document.getElementById('startTest');
+            const refreshButton = document.getElementById('refreshTest');
+            
+            // UI初期化
+            startButton.disabled = true;
+            refreshButton.disabled = true;
+            loadingDiv.style.display = 'block';
+            messagesDiv.style.display = 'none';
+            statsDiv.style.display = 'none';
+            
+            try {
+                // Chrome拡張機能環境チェック
+                if (typeof chrome === 'undefined') {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = '❌ Chrome拡張機能環境が必要です<br>💡 Chrome拡張機能をロードしてから実行してください';
+                    return;
+                }
+                
+                statusDiv.className = 'status info';
+                statusDiv.innerHTML = '🔍 Gmail Service 初期化中...';
+                
+                // Gmail Service のモック（デモ用）
+                const mockGmailService = {
+                    async isAuthenticated() {
+                        // 認証状態のシミュレーション
+                        return Math.random() > 0.3; // 70%の確率で認証済み
+                    },
+                    
+                    async getMessages({ limit = 5, unreadOnly = true } = {}) {
+                        // 認証確認
+                        if (!await this.isAuthenticated()) {
+                            return {
+                                success: false,
+                                error: { message: 'Gmail認証が必要です' }
+                            };
+                        }
+                        
+                        // モックメッセージ生成
+                        const mockMessages = [
+                            {
+                                id: 'msg1',
+                                from: '田中太郎 <tanaka@example.com>',
+                                content: '【重要】プロジェクトの件について - 明日の会議の件で相談があります。',
+                                timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30分前
+                                channel: 'gmail',
+                                isUnread: true
+                            },
+                            {
+                                id: 'msg2',
+                                from: '佐藤花子 <sato@company.com>',
+                                content: '資料の確認お願いします - 添付ファイルをご確認ください。',
+                                timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2時間前
+                                channel: 'gmail',
+                                isUnread: true
+                            },
+                            {
+                                id: 'msg3',
+                                from: 'システム管理者 <admin@system.com>',
+                                content: 'メンテナンスのお知らせ - 今夜21:00～23:00の間にメンテナンスを実施します。',
+                                timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4時間前
+                                channel: 'gmail',
+                                isUnread: true
+                            }
+                        ];
+                        
+                        // ランダムに一部のメッセージを返す
+                        const randomCount = Math.floor(Math.random() * mockMessages.length) + 1;
+                        return {
+                            success: true,
+                            messages: mockMessages.slice(0, randomCount)
+                        };
+                    }
+                };
+                
+                // 認証状態確認
+                statusDiv.innerHTML = '🔐 認証状態確認中...';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const isAuthenticated = await mockGmailService.isAuthenticated();
+                
+                if (!isAuthenticated) {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = '❌ Gmail認証が必要です<br>💡 セットアップを実行してください';
+                    return;
+                }
+                
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '✅ Gmail認証確認完了';
+                
+                // 新着メッセージ取得
+                statusDiv.innerHTML = '📬 新着メッセージ取得中...';
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                const result = await mockGmailService.getMessages({
+                    limit: 5,
+                    unreadOnly: true
+                });
+                
+                if (result.success) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `📨 ${result.messages.length}件の新着メッセージを取得しました`;
+                    
+                    // メッセージ表示
+                    displayMessages(result.messages);
+                    
+                    // 統計情報表示
+                    displayStats(result.messages);
+                    
+                    messagesDiv.style.display = 'block';
+                    statsDiv.style.display = 'block';
+                    
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = `❌ メッセージ取得に失敗しました<br>🔍 エラー: ${result.error.message}`;
+                }
+                
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `💥 テスト実行中にエラーが発生しました<br>🔍 エラー: ${error.message}`;
+                console.error('Gmail test error:', error);
+            } finally {
+                loadingDiv.style.display = 'none';
+                startButton.disabled = false;
+                refreshButton.disabled = false;
+            }
+        }
+        
+        function displayMessages(messages) {
+            const messageList = document.getElementById('messageList');
+            messageList.innerHTML = '';
+            
+            messages.forEach((message, index) => {
+                const messageCard = document.createElement('div');
+                messageCard.className = 'message-card';
+                
+                messageCard.innerHTML = `
+                    <div class="message-header">
+                        <span class="sender">${message.from}</span>
+                        <div>
+                            <span class="channel-badge">${message.channel}</span>
+                            <span class="time">${message.timestamp.toLocaleString('ja-JP')}</span>
+                        </div>
+                    </div>
+                    <div class="subject">${message.content.substring(0, 50)}...</div>
+                    <div class="content">${message.content}</div>
+                `;
+                
+                messageList.appendChild(messageCard);
+            });
+        }
+        
+        function displayStats(messages) {
+            const statsContent = document.getElementById('statsContent');
+            
+            const channelCounts = {};
+            messages.forEach(msg => {
+                channelCounts[msg.channel] = (channelCounts[msg.channel] || 0) + 1;
+            });
+            
+            const statsHtml = `
+                <p><strong>📊 総メッセージ数:</strong> ${messages.length}件</p>
+                <p><strong>📋 チャンネル別内訳:</strong></p>
+                <ul>
+                    ${Object.entries(channelCounts).map(([channel, count]) => 
+                        `<li>${channel}: ${count}件</li>`
+                    ).join('')}
+                </ul>
+                <p><strong>🕐 最新メッセージ:</strong> ${messages[0]?.timestamp.toLocaleString('ja-JP') || 'なし'}</p>
+            `;
+            
+            statsContent.innerHTML = statsHtml;
+        }
+        
+        function refreshTest() {
+            startGmailTest();
+        }
+        
+        // ページ読み込み時の初期化
+        window.addEventListener('load', function() {
+            const statusDiv = document.getElementById('status');
+            
+            if (typeof chrome === 'undefined') {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ Chrome拡張機能環境が必要です<br>💡 Chrome拡張機能をロードしてから実行してください';
+                document.getElementById('startTest').disabled = true;
+            } else {
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '✅ Chrome拡張機能環境を検出しました<br>📬 「Gmail新着メッセージ取得開始」ボタンをクリックしてください';
+            }
+        });
+    </script>
+</body>
+</html> 

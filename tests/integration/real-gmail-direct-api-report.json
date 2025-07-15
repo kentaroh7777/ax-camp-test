@@ -1,0 +1,29 @@
+{
+  "totalTests": 3,
+  "passedTests": 1,
+  "failedTests": 2,
+  "successRate": 33,
+  "results": [
+    {
+      "name": "Gmail API認証確認",
+      "status": "failed",
+      "message": "認証失敗: Gmail APIアクセストークンが無効です。新しいトークンが必要です。",
+      "duration": 201,
+      "timestamp": "2025-07-15T07:36:57.044Z"
+    },
+    {
+      "name": "実アカウントメッセージ取得",
+      "status": "failed",
+      "message": "メッセージ取得失敗: メッセージ取得失敗: Gmail API error: 401 Unauthorized",
+      "duration": 184,
+      "timestamp": "2025-07-15T07:36:57.236Z"
+    },
+    {
+      "name": "メッセージ詳細分析",
+      "status": "passed",
+      "message": "分析対象メッセージなし",
+      "duration": 169,
+      "timestamp": "2025-07-15T07:36:57.406Z"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+TestCase,Duration(ms),Status
+Gmail Service 初期化,0,PASS
+Gmail 認証,1204,PASS
+
+SUMMARY
+Total Tests,17,
+Passed,16,
+Failed,1,
+Success Rate,94.1%,
+Total Duration,4214ms,

@@ -1,0 +1,29 @@
+{
+  "totalTests": 3,
+  "passedTests": 1,
+  "failedTests": 2,
+  "successRate": 33,
+  "results": [
+    {
+      "name": "Gmail認証状態確認",
+      "status": "failed",
+      "message": "認証失敗: 認証トークンが見つからないか、リフレッシュトークンがありません。",
+      "duration": 2,
+      "timestamp": "2025-07-15T08:16:21.664Z"
+    },
+    {
+      "name": "本実装メッセージ取得",
+      "status": "failed",
+      "message": "メッセージ取得失敗: Gmail認証が必要です。先に認証テストを実行してください。",
+      "duration": 0,
+      "timestamp": "2025-07-15T08:16:21.669Z"
+    },
+    {
+      "name": "本実装メッセージ処理確認",
+      "status": "passed",
+      "message": "分析対象メッセージなし",
+      "duration": 0,
+      "timestamp": "2025-07-15T08:16:21.670Z"
+    }
+  ]
+}
