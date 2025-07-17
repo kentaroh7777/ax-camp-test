@@ -33,6 +33,10 @@ ngrok http 3000
 - **Test**: Vitest + Testing Library
 - **Architecture**: Clean Architecture (4層構成)
 
+## 各チャンネル調査資料
+doc/research/results/*.md
+にあります。
+
 ## プロジェクト構成
 
 ```
