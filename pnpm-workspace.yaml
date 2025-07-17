@@ -1,0 +1,4 @@
+packages:
+  - 'chrome-extension'
+  - 'channel-proxy-server'
+  - 'shared'

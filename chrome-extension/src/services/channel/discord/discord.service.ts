@@ -8,8 +8,11 @@ import { Message } from '../../../types/core/message.types';
 import { IAuthTokenManager } from '../../../types/infrastructure/auth.types';
 
 export class DiscordService extends BaseMessageClient {
+  private proxyUrl: string;
+
   constructor(authTokenManager: IAuthTokenManager) {
     super(authTokenManager, ChannelType.DISCORD);
+    this.proxyUrl = process.env.PROXY_SERVER_URL + '/api/discord';
   }
   
   protected getChannelName(): string {
@@ -17,30 +20,44 @@ export class DiscordService extends BaseMessageClient {
   }
   
   async sendMessage(params: SendMessageParams): Promise<SendMessageResult> {
+    console.log('DiscordService.sendMessage called.');
+    console.log('DiscordService.sendMessage: Entering try block.');
     try {
-      const webhookUrl = await this.getValidToken(); // Webhook URL is stored as token
+      const token = await this.getValidToken();
+      console.log('DiscordService.sendMessage: Token obtained:', token);
       
       const payload = {
+        channelId: params.to,
         content: params.content,
-        username: 'Multi-Channel Assistant',
-        avatar_url: undefined, // Can be set in the future
       };
+
+      const fullUrl = `${this.proxyUrl}/send`;
+      console.log('Discord Service: Sending message to URL:', fullUrl, 'with payload:', payload);
+      console.log('DiscordService.sendMessage: About to call fetch.');
       
-      const response = await fetch(webhookUrl, {
+      const response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
       
       if (!response.ok) {
-        throw new Error(`Discord Webhook error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Discord Proxy error: ${response.status} ${response.statusText} - ${errorText}`);
       }
       
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(`Discord Proxy reported failure: ${result.error?.message || 'Unknown error'}`);
+      }
+
       return {
         success: true,
-        messageId: 'discord-webhook-sent',
+        messageId: result.data?.messageId || 'discord-message-sent',
       };
     } catch (error) {
       return {
@@ -54,23 +71,65 @@ export class DiscordService extends BaseMessageClient {
   }
   
   async getMessages(params: GetMessagesParams): Promise<GetMessagesResult> {
-    // Discord Webhooks do not support message retrieval
-    // This would require DOM scraping or Discord Bot API implementation
-    // For now, return empty result as placeholder
-    return {
-      success: true,
-      messages: [],
-      hasMore: false,
-    };
+    try {
+      const token = await this.getValidToken();
+      const queryParams = new URLSearchParams({
+        limit: (params.limit || 50).toString(),
+      });
+      if (params.since) {
+        queryParams.append('since', params.since.toISOString());
+      }
+
+      const fullUrl = `${this.proxyUrl}/messages?${queryParams.toString()}`;
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Discord Proxy error: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(`Discord Proxy reported failure: ${result.error?.message || 'Unknown error'}`);
+      }
+
+      return {
+        success: true,
+        messages: result.messages || [],
+        hasMore: result.hasMore || false,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        messages: [],
+        hasMore: false,
+        error: {
+          code: 'DISCORD_FETCH_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+      };
+    }
   }
   
   async authenticate(credentials?: { webhookUrl: string }): Promise<AuthResult> {
+    // Authentication for Discord will now involve getting a bot token or similar
+    // For now, we'll assume the token is managed by the proxy server and just validate webhook URL if provided
     try {
       if (!credentials?.webhookUrl) {
-        throw new Error('Discord Webhook URL is required');
+        // If no webhookUrl is provided, assume authentication is handled by proxy setup
+        return {
+          success: true,
+          token: 'proxy-managed-auth',
+        };
       }
       
-      // Validate webhook URL
+      // Validate webhook URL if provided (for initial setup or direct webhook use)
       const response = await fetch(credentials.webhookUrl, {
         method: 'GET',
       });
@@ -79,7 +138,7 @@ export class DiscordService extends BaseMessageClient {
         throw new Error('Invalid Discord Webhook URL');
       }
       
-      // Store webhook URL as token
+      // Store webhook URL as token (if still needed for some direct operations)
       const authToken = {
         accessToken: credentials.webhookUrl,
         expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year validity

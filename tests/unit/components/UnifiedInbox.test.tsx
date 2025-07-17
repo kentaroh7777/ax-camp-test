@@ -1,6 +1,32 @@
+
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // Deprecated
+    removeListener: vi.fn(), // Deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+Object.defineProperty(window, 'getComputedStyle', {
+  writable: true,
+  value: (elt) => {
+    return {
+      getPropertyValue: (prop) => {
+        return '';
+      },
+    };
+  },
+});
 import { UnifiedInbox } from '../../../chrome-extension/src/components/inbox/UnifiedInbox/UnifiedInbox';
 import { ReplyAssistantService } from '../../../chrome-extension/src/services/application/reply-assistant.service';
 import { ResolvedMessage } from '../../../chrome-extension/src/types/core/user.types';
@@ -47,7 +73,7 @@ describe('UnifiedInbox', () => {
     vi.clearAllMocks();
   });
 
-  it('renders inbox header correctly', () => {
+  it('renders inbox header correctly', async () => {
     vi.mocked(mockReplyAssistantService.fetchAllUnreadMessages).mockResolvedValue({
       success: true,
       messages: [],
@@ -56,14 +82,16 @@ describe('UnifiedInbox', () => {
       lastFetch: new Date(),
     });
 
-    render(
-      <UnifiedInbox
-        replyAssistantService={mockReplyAssistantService}
-        onReplyClick={mockOnReplyClick}
-        onSettingsClick={mockOnSettingsClick}
-        onUserMappingClick={mockOnUserMappingClick}
-      />
-    );
+    await act(async () => {
+      render(
+        <UnifiedInbox
+          replyAssistantService={mockReplyAssistantService}
+          onReplyClick={mockOnReplyClick}
+          onSettingsClick={mockOnSettingsClick}
+          onUserMappingClick={mockOnUserMappingClick}
+        />
+      );
+    });
 
     expect(screen.getByText('統合受信箱')).toBeInTheDocument();
     expect(screen.getByText('確認開始')).toBeInTheDocument();
@@ -80,14 +108,16 @@ describe('UnifiedInbox', () => {
       lastFetch: new Date(),
     });
 
-    render(
-      <UnifiedInbox
-        replyAssistantService={mockReplyAssistantService}
-        onReplyClick={mockOnReplyClick}
-        onSettingsClick={mockOnSettingsClick}
-        onUserMappingClick={mockOnUserMappingClick}
-      />
-    );
+    await act(async () => {
+      render(
+        <UnifiedInbox
+          replyAssistantService={mockReplyAssistantService}
+          onReplyClick={mockOnReplyClick}
+          onSettingsClick={mockOnSettingsClick}
+          onUserMappingClick={mockOnUserMappingClick}
+        />
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Test User')).toBeInTheDocument();
@@ -109,7 +139,7 @@ describe('UnifiedInbox', () => {
     expect(mockOnReplyClick).toHaveBeenCalledWith(mockMessage);
   });
 
-  it('handles settings button click', () => {
+  it('handles settings button click', async () => {
     vi.mocked(mockReplyAssistantService.fetchAllUnreadMessages).mockResolvedValue({
       success: true,
       messages: [],
@@ -118,14 +148,16 @@ describe('UnifiedInbox', () => {
       lastFetch: new Date(),
     });
 
-    render(
-      <UnifiedInbox
-        replyAssistantService={mockReplyAssistantService}
-        onReplyClick={mockOnReplyClick}
-        onSettingsClick={mockOnSettingsClick}
-        onUserMappingClick={mockOnUserMappingClick}
-      />
-    );
+    await act(async () => {
+      render(
+        <UnifiedInbox
+          replyAssistantService={mockReplyAssistantService}
+          onReplyClick={mockOnReplyClick}
+          onSettingsClick={mockOnSettingsClick}
+          onUserMappingClick={mockOnUserMappingClick}
+        />
+      );
+    });
 
     const settingsButton = screen.getByText('設定');
     fireEvent.click(settingsButton);
@@ -166,14 +198,16 @@ describe('UnifiedInbox', () => {
       },
     });
 
-    render(
-      <UnifiedInbox
-        replyAssistantService={mockReplyAssistantService}
-        onReplyClick={mockOnReplyClick}
-        onSettingsClick={mockOnSettingsClick}
-        onUserMappingClick={mockOnUserMappingClick}
-      />
-    );
+    await act(async () => {
+      render(
+        <UnifiedInbox
+          replyAssistantService={mockReplyAssistantService}
+          onReplyClick={mockOnReplyClick}
+          onSettingsClick={mockOnSettingsClick}
+          onUserMappingClick={mockOnUserMappingClick}
+        />
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Failed to fetch messages')).toBeInTheDocument();
@@ -189,14 +223,16 @@ describe('UnifiedInbox', () => {
       lastFetch: new Date(),
     });
 
-    render(
-      <UnifiedInbox
-        replyAssistantService={mockReplyAssistantService}
-        onReplyClick={mockOnReplyClick}
-        onSettingsClick={mockOnSettingsClick}
-        onUserMappingClick={mockOnUserMappingClick}
-      />
-    );
+    await act(async () => {
+      render(
+        <UnifiedInbox
+          replyAssistantService={mockReplyAssistantService}
+          onReplyClick={mockOnReplyClick}
+          onSettingsClick={mockOnSettingsClick}
+          onUserMappingClick={mockOnUserMappingClick}
+        />
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByText('未読メッセージはありません')).toBeInTheDocument();

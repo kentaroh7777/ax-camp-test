@@ -322,18 +322,69 @@ export class GmailService extends BaseMessageClient {
   }
   
   private extractEmailContent(payload: any): string {
-    if (payload.body?.data) {
-      return atob(payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
-    }
-    
-    if (payload.parts) {
-      for (const part of payload.parts) {
-        if (part.mimeType === 'text/plain' && part.body?.data) {
-          return atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+    let contentPart: any = null;
+    let mimeType = '';
+
+    // Recursively find the most suitable content part, preferring text/plain.
+    const findPart = (parts: any[]) => {
+      if (!parts) return;
+      for (const part of parts) {
+        if (part.mimeType === 'text/plain') {
+          contentPart = part;
+          mimeType = 'text/plain';
+          return; // Found plain text, stop searching.
+        }
+        if (part.mimeType === 'text/html' && !contentPart) {
+          contentPart = part;
+          mimeType = 'text/html';
+        }
+        if (part.parts) {
+          findPart(part.parts);
+          if (mimeType === 'text/plain') return;
         }
       }
+    };
+
+    findPart(payload.parts || [payload]);
+
+    if (!contentPart && payload.body?.data) {
+        contentPart = payload;
+        mimeType = payload.mimeType || 'text/plain';
     }
-    
+
+    if (contentPart && contentPart.body?.data) {
+      const bodyData = contentPart.body.data.replace(/-/g, '+').replace(/_/g, '/');
+      const contentTypeHeader = contentPart.headers?.find(
+        (h: any) => h.name.toLowerCase() === 'content-type'
+      )?.value || 'text/plain; charset=utf-8';
+      
+      const match = contentTypeHeader.match(/charset="?([^"]*)"?/i);
+      const charset = match ? match[1].toLowerCase() : 'utf-8';
+      
+      try {
+        // Cross-platform Base64 to Uint8Array decoding
+        const binaryString = atob(bodyData);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        const decoder = new TextDecoder(charset, { fatal: false });
+        let text = decoder.decode(bytes);
+        
+        if (mimeType === 'text/html') {
+          text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+          text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+          text = text.replace(/<[^>]+>/g, ' ');
+          text = text.replace(/\s+/g, ' ').trim();
+        }
+        return text;
+      } catch (e) {
+        console.error(`Error decoding email content with charset ${charset}:`, e);
+        return atob(bodyData);
+      }
+    }
+
     return 'No content available';
   }
 }

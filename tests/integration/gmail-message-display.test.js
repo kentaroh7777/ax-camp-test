@@ -13,36 +13,129 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// TypeScriptファイルの直接インポート
-const GmailService = (await import('../../chrome-extension/src/services/channel/gmail/gmail.service.ts')).GmailService;
-const ReplyAssistantService = (await import('../../chrome-extension/src/services/application/reply-assistant.service.ts')).ReplyAssistantService;
-const ChromeStorageRepository = (await import('../../chrome-extension/src/services/infrastructure/chrome-storage.repository.ts')).ChromeStorageRepository;
+// Mock Chrome API globally for all tests that might use it
+global.chrome = {
+  storage: {
+    local: {
+      get: vi.fn(),
+      set: vi.fn(),
+      remove: vi.fn(),
+      clear: vi.fn(),
+    },
+  },
+  identity: {
+    getAuthToken: vi.fn(),
+    removeCachedAuthToken: vi.fn(),
+    launchWebAuthFlow: vi.fn(),
+  },
+};
+
+// Mock the entire modules for dependency injection
+vi.mock('../../chrome-extension/src/services/infrastructure/auth-token.manager', () => {
+  const mockAuthTokenManagerInstance = {
+    getToken: vi.fn(),
+    validateToken: vi.fn(),
+    refreshToken: vi.fn(),
+    saveToken: vi.fn(),
+  };
+  return { AuthTokenManager: vi.fn(() => mockAuthTokenManagerInstance) };
+});
+
+vi.mock('../../chrome-extension/src/services/channel/base/message-client.factory', () => {
+  const mockGmailClient = {
+    getChannelInfo: () => ({ type: 'gmail', name: 'Gmail', isConnected: true }),
+    getMessages: vi.fn(),
+    sendMessage: vi.fn(),
+    authenticate: vi.fn(),
+    isAuthenticated: vi.fn(),
+  };
+  const mockMessageClientFactoryInstance = {
+    createAllClients: vi.fn(() => ({
+      gmail: mockGmailClient,
+      // Add other mocked clients if necessary for future tests
+    })),
+  };
+  return { MessageClientFactory: vi.fn(() => mockMessageClientFactoryInstance) };
+});
+
+vi.mock('../../chrome-extension/src/services/application/user-mapping.service', () => {
+  const mockUserMappingServiceInstance = {
+    resolveUserMappings: vi.fn(async (messages) => messages.map(msg => ({ ...msg, resolvedContact: { name: 'Mock User', email: 'mock@example.com' } }))),
+    getMapping: vi.fn(),
+  };
+  return { UserMappingService: vi.fn(() => mockUserMappingServiceInstance) };
+});
+
+vi.mock('../../chrome-extension/src/services/application/llm-integration.service', () => {
+  const mockLLMIntegrationServiceInstance = {
+    optimizePrompt: vi.fn((context) => `Optimized: ${context}`),
+    generateReply: vi.fn(async (prompt, context) => `Generated reply for: ${prompt}`),
+  };
+  return { LLMIntegrationService: vi.fn(() => mockLLMIntegrationServiceInstance) };
+});
+
+// Import the actual services after mocking their dependencies
+import { GmailService } from '../../chrome-extension/src/services/channel/gmail/gmail.service';
+import { ReplyAssistantService } from '../../chrome-extension/src/services/application/reply-assistant.service';
+import { ChromeStorageRepository } from '../../chrome-extension/src/services/infrastructure/chrome-storage.repository';
+
+// Get the mocked instances
+import { AuthTokenManager } from '../../chrome-extension/src/services/infrastructure/auth-token.manager';
+import { MessageClientFactory } from '../../chrome-extension/src/services/channel/base/message-client.factory';
+import { UserMappingService } from '../../chrome-extension/src/services/application/user-mapping.service';
+import { LLMIntegrationService } from '../../chrome-extension/src/services/application/llm-integration.service';
+
 
 describe('Gmail新着メッセージ表示 結合テスト', () => {
-  let gmailService;
-  let replyAssistant;
-  let storageRepository;
+  let gmailService: GmailService;
+  let replyAssistant: ReplyAssistantService;
+  let storageRepository: ChromeStorageRepository;
+  let mockedAuthTokenManager: ReturnType<typeof AuthTokenManager>;
+  let mockedMessageClientFactory: ReturnType<typeof MessageClientFactory>;
+  let mockedUserMappingService: ReturnType<typeof UserMappingService>;
+  let mockedLLMService: ReturnType<typeof LLMIntegrationService>;
+
 
   beforeEach(() => {
-    // Chrome API のモック
-    global.chrome = {
-      storage: {
-        local: {
-          get: vi.fn(),
-          set: vi.fn(),
-          remove: vi.fn(),
-          clear: vi.fn()
-        }
-      },
-      identity: {
-        getAuthToken: vi.fn(),
-        removeCachedAuthToken: vi.fn(),
-        launchWebAuthFlow: vi.fn()
-      }
-    };
+    vi.clearAllMocks();
 
-    gmailService = new GmailService();
-    replyAssistant = new ReplyAssistantService();
+    // Get the mocked instances from the mocked modules
+    mockedAuthTokenManager = new AuthTokenManager();
+    mockedMessageClientFactory = new MessageClientFactory(mockedAuthTokenManager);
+    mockedUserMappingService = new UserMappingService();
+    mockedLLMService = new LLMIntegrationService();
+
+    // Set up mock return values for AuthTokenManager
+    mockedAuthTokenManager.getToken.mockResolvedValue({
+      accessToken: 'mock_access_token',
+      expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
+      tokenType: 'Bearer',
+      scope: [],
+    });
+    mockedAuthTokenManager.validateToken.mockResolvedValue(true);
+    mockedAuthTokenManager.refreshToken.mockResolvedValue({
+      accessToken: 'mock_new_access_token',
+      expiresAt: new Date(Date.now() + 3600000),
+      tokenType: 'Bearer',
+      scope: [],
+    });
+
+    // Set up mock return values for UserMappingService
+    mockedUserMappingService.resolveUserMappings.mockImplementation(async (messages) => messages.map(msg => ({ ...msg, resolvedContact: { name: 'Mock User', email: 'mock@example.com' } })));
+    mockedUserMappingService.getMapping.mockResolvedValue({
+      userId: 'mock_user_id',
+      channels: {
+        gmail: { email: 'mock@example.com' },
+      },
+    });
+
+    // Set up mock return values for LLMIntegrationService
+    mockedLLMService.optimizePrompt.mockImplementation((context) => `Optimized: ${context}`);
+    mockedLLMService.generateReply.mockImplementation(async (prompt, context) => `Generated reply for: ${prompt}`);
+
+    // Instantiate services with mocked dependencies
+    gmailService = new GmailService(mockedAuthTokenManager);
+    replyAssistant = new ReplyAssistantService(mockedMessageClientFactory, mockedUserMappingService, mockedLLMService);
     storageRepository = new ChromeStorageRepository();
   });
 
@@ -57,16 +150,6 @@ describe('Gmail新着メッセージ表示 結合テスト', () => {
     });
 
     it('認証状態を確認できる', async () => {
-      // Mock 認証済み状態
-      chrome.storage.local.get.mockResolvedValue({
-        auth_tokens: {
-          gmail: {
-            accessToken: 'test_token',
-            expiresAt: new Date(Date.now() + 3600000).toISOString()
-          }
-        }
-      });
-
       const isAuthenticated = await gmailService.isAuthenticated();
       expect(isAuthenticated).toBe(true);
     });
@@ -74,16 +157,6 @@ describe('Gmail新着メッセージ表示 結合テスト', () => {
 
   describe('メッセージ取得テスト', () => {
     beforeEach(() => {
-      // Mock 認証済み状態
-      chrome.storage.local.get.mockResolvedValue({
-        auth_tokens: {
-          gmail: {
-            accessToken: 'test_token',
-            expiresAt: new Date(Date.now() + 3600000).toISOString()
-          }
-        }
-      });
-
       // Mock Gmail API レスポンス
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -149,16 +222,6 @@ describe('Gmail新着メッセージ表示 結合テスト', () => {
 
   describe('統合受信箱テスト', () => {
     beforeEach(() => {
-      // Mock 認証済み状態（全チャンネル）
-      chrome.storage.local.get.mockResolvedValue({
-        auth_tokens: {
-          gmail: {
-            accessToken: 'gmail_token',
-            expiresAt: new Date(Date.now() + 3600000).toISOString()
-          }
-        }
-      });
-
       // Mock Gmail API レスポンス
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -202,15 +265,6 @@ describe('Gmail新着メッセージ表示 結合テスト', () => {
 
   describe('メッセージ表示フォーマットテスト', () => {
     it('メッセージが正しい形式で表示される', async () => {
-      chrome.storage.local.get.mockResolvedValue({
-        auth_tokens: {
-          gmail: {
-            accessToken: 'test_token',
-            expiresAt: new Date(Date.now() + 3600000).toISOString()
-          }
-        }
-      });
-
       const mockMessage = {
         id: 'msg123',
         threadId: 'thread123',
@@ -255,7 +309,8 @@ export async function runGmailMessageDisplayTest() {
     }
 
     // Gmail Service 初期化
-    const gmailService = new GmailService();
+    const authTokenManager = new AuthTokenManager();
+    const gmailService = new GmailService(authTokenManager);
     console.log('✅ Gmail Service 初期化完了');
 
     // 認証状態確認
@@ -292,7 +347,10 @@ export async function runGmailMessageDisplayTest() {
 
       // 統合受信箱テスト
       console.log('\n🤖 統合受信箱テスト実行中...');
-      const replyAssistant = new ReplyAssistantService();
+      const messageClientFactory = new MessageClientFactory(authTokenManager);
+      const userMappingService = new UserMappingService();
+      const llmService = new LLMIntegrationService();
+      const replyAssistant = new ReplyAssistantService(messageClientFactory, userMappingService, llmService);
       const unifiedResult = await replyAssistant.fetchAllUnreadMessages();
 
       console.log(`📊 統合結果: ${unifiedResult.messages.length}件のメッセージ`);
@@ -308,7 +366,7 @@ export async function runGmailMessageDisplayTest() {
       });
 
       console.log('\n✅ Gmail新着メッセージ表示テスト完了');
-      return result;
+      return unifiedResult;
 
     } else {
       console.log('❌ メッセージ取得に失敗しました');
@@ -329,4 +387,4 @@ export async function runGmailMessageDisplayTest() {
 // Node.js環境での実行
 if (typeof process !== 'undefined' && process.argv[1] === import.meta.url) {
   runGmailMessageDisplayTest().catch(console.error);
-} 
+}

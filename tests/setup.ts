@@ -1,33 +1,14 @@
-import '@testing-library/jest-dom'
+import dotenv from 'dotenv';
+import path from 'path';
 
-// Mock jsdom missing features for Ant Design
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation(query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+// Load environment variables from .env.local before all tests run.
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
-Object.defineProperty(window, 'getComputedStyle', {
-  value: () => ({
-    getPropertyValue: () => '',
-    display: 'none',
-    appearance: 'none'
-  })
-});
+// Keep existing setup for vitest-dom and other mocks.
+import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
-Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-  value: vi.fn(),
-});
-
-// Mock Chrome APIs
+// Mock chrome APIs for tests that need it.
 global.chrome = {
   storage: {
     local: {
@@ -49,6 +30,9 @@ global.chrome = {
     sendMessage: vi.fn()
   }
 } as any
+
+// The global fetch mock was interfering with real API calls in integration tests.
+// It has been removed. Tests that require a mocked fetch should use vi.spyOn(global, 'fetch').
 
 // Mock environment variables
 process.env.NODE_ENV = 'test'

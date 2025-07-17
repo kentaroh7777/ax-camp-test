@@ -1,0 +1,73 @@
+{
+  "name": "channel-proxy-server",
+  "version": "1.0.0",
+  "description": "Proxy server for various communication channels.",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "dev": "tsx watch --env-file ../.env.local src/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "prestart": "npm run build"
+  },
+  "keywords": [
+    "line-api",
+    "proxy",
+    "chrome-extension",
+    "cors",
+    "express"
+  ],
+  "author": "Multi-Channel Reply Assistant",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.5.0",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "discord.js": "^14.21.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.0.0",
+    "opossum": "^8.0.0",
+    "winston": "^3.10.0"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.7.2",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^20.5.0",
+    "@types/opossum": "^8.1.9",
+    "@types/supertest": "^2.0.12",
+    "@typescript-eslint/eslint-plugin": "^6.4.1",
+    "@typescript-eslint/parser": "^6.4.1",
+    "eslint": "^8.47.0",
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.2.2",
+    "vitest": "^1.6.1",
+    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/ui": "^1.6.1",
+    "tsx": "^4.7.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/user/multi-channel-reply-assistant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/user/multi-channel-reply-assistant/issues"
+  },
+  "homepage": "https://github.com/user/multi-channel-reply-assistant#readme"
+}

@@ -4,7 +4,7 @@ import path from 'path'
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'node',
     include: ['chrome-extension/src/**/*.{test,spec}.{js,ts,tsx}', 'tests/**/*.{test,spec}.{js,ts,tsx}'],
     exclude: ['node_modules', 'dist', '**/*.d.ts'],
     coverage: {

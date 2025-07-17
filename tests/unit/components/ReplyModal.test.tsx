@@ -1,6 +1,31 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // Deprecated
+    removeListener: vi.fn(), // Deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+Object.defineProperty(window, 'getComputedStyle', {
+  writable: true,
+  value: (elt) => {
+    return {
+      getPropertyValue: (prop) => {
+        return '';
+      },
+    };
+  },
+});
 import { ReplyModal } from '../../../chrome-extension/src/components/reply/ReplyModal/ReplyModal';
 import { ReplyAssistantService } from '../../../chrome-extension/src/services/application/reply-assistant.service';
 import { ResolvedMessage } from '../../../chrome-extension/src/types/core/user.types';
@@ -47,7 +72,7 @@ describe('ReplyModal', () => {
     vi.clearAllMocks();
   });
 
-  it('renders modal when visible', () => {
+  it('renders modal when visible', async () => {
     vi.mocked(mockReplyAssistantService.generateReply).mockResolvedValue({
       success: true,
       reply: 'Generated reply content',
@@ -57,31 +82,35 @@ describe('ReplyModal', () => {
 
     vi.mocked(mockReplyAssistantService.getRelatedMessages).mockResolvedValue([]);
 
-    render(
-      <ReplyModal
-        visible={true}
-        message={mockMessage}
-        replyAssistantService={mockReplyAssistantService}
-        onSend={mockOnSend}
-        onCancel={mockOnCancel}
-      />
-    );
+    await act(async () => {
+      render(
+        <ReplyModal
+          visible={true}
+          message={mockMessage}
+          replyAssistantService={mockReplyAssistantService}
+          onSend={mockOnSend}
+          onCancel={mockOnCancel}
+        />
+      );
+    });
 
     expect(screen.getByText('返信作成')).toBeInTheDocument();
     expect(screen.getByText('返信先: Test User')).toBeInTheDocument();
     expect(screen.getByText('AI生成返信案:')).toBeInTheDocument();
   });
 
-  it('does not render modal when not visible', () => {
-    render(
-      <ReplyModal
-        visible={false}
-        message={mockMessage}
-        replyAssistantService={mockReplyAssistantService}
-        onSend={mockOnSend}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('does not render modal when not visible', async () => {
+    await act(async () => {
+      render(
+        <ReplyModal
+          visible={false}
+          message={mockMessage}
+          replyAssistantService={mockReplyAssistantService}
+          onSend={mockOnSend}
+          onCancel={mockOnCancel}
+        />
+      );
+    });
 
     expect(screen.queryByText('返信作成')).not.toBeInTheDocument();
   });
@@ -96,15 +125,17 @@ describe('ReplyModal', () => {
 
     vi.mocked(mockReplyAssistantService.getRelatedMessages).mockResolvedValue([]);
 
-    render(
-      <ReplyModal
-        visible={true}
-        message={mockMessage}
-        replyAssistantService={mockReplyAssistantService}
-        onSend={mockOnSend}
-        onCancel={mockOnCancel}
-      />
-    );
+    await act(async () => {
+      render(
+        <ReplyModal
+          visible={true}
+          message={mockMessage}
+          replyAssistantService={mockReplyAssistantService}
+          onSend={mockOnSend}
+          onCancel={mockOnCancel}
+        />
+      );
+    });
 
     await waitFor(() => {
       // TextAreaで確認（編集領域）
@@ -135,19 +166,23 @@ describe('ReplyModal', () => {
 
     vi.mocked(mockReplyAssistantService.getRelatedMessages).mockResolvedValue([]);
 
-    render(
-      <ReplyModal
-        visible={true}
-        message={mockMessage}
-        replyAssistantService={mockReplyAssistantService}
-        onSend={mockOnSend}
-        onCancel={mockOnCancel}
-      />
-    );
+    await act(async () => {
+      render(
+        <ReplyModal
+          visible={true}
+          message={mockMessage}
+          replyAssistantService={mockReplyAssistantService}
+          onSend={mockOnSend}
+          onCancel={mockOnCancel}
+        />
+      );
+    });
 
     await waitFor(() => {
       const textArea = screen.getByPlaceholderText('返信内容を入力または編集してください');
-      fireEvent.change(textArea, { target: { value: 'Modified reply content' } });
+      act(() => {
+        fireEvent.change(textArea, { target: { value: 'Modified reply content' } });
+      });
     });
 
     const textArea = screen.getByPlaceholderText('返信内容を入力または編集してください');
@@ -165,15 +200,17 @@ describe('ReplyModal', () => {
     vi.mocked(mockReplyAssistantService.getRelatedMessages).mockResolvedValue([]);
     mockOnSend.mockResolvedValue(); // Promise resolveを返すよう設定
 
-    render(
-      <ReplyModal
-        visible={true}
-        message={mockMessage}
-        replyAssistantService={mockReplyAssistantService}
-        onSend={mockOnSend}
-        onCancel={mockOnCancel}
-      />
-    );
+    await act(async () => {
+      render(
+        <ReplyModal
+          visible={true}
+          message={mockMessage}
+          replyAssistantService={mockReplyAssistantService}
+          onSend={mockOnSend}
+          onCancel={mockOnCancel}
+        />
+      );
+    });
 
     // AI生成完了まで待機
     await waitFor(() => {
@@ -183,14 +220,16 @@ describe('ReplyModal', () => {
 
     // 送信ボタンをクリック
     const sendButton = screen.getByText('送信');
-    fireEvent.click(sendButton);
+    await act(async () => {
+      fireEvent.click(sendButton);
+    });
 
     await waitFor(() => {
       expect(mockOnSend).toHaveBeenCalledWith('Reply to send', mockMessage);
     });
   });
 
-  it('handles cancel button click', () => {
+  it('handles cancel button click', async () => {
     vi.mocked(mockReplyAssistantService.generateReply).mockResolvedValue({
       success: true,
       reply: 'Reply content',
@@ -200,18 +239,22 @@ describe('ReplyModal', () => {
 
     vi.mocked(mockReplyAssistantService.getRelatedMessages).mockResolvedValue([]);
 
-    render(
-      <ReplyModal
-        visible={true}
-        message={mockMessage}
-        replyAssistantService={mockReplyAssistantService}
-        onSend={mockOnSend}
-        onCancel={mockOnCancel}
-      />
-    );
+    await act(async () => {
+      render(
+        <ReplyModal
+          visible={true}
+          message={mockMessage}
+          replyAssistantService={mockReplyAssistantService}
+          onSend={mockOnSend}
+          onCancel={mockOnCancel}
+        />
+      );
+    });
 
     const cancelButton = screen.getByText('キャンセル');
-    fireEvent.click(cancelButton);
+    await act(async () => {
+      fireEvent.click(cancelButton);
+    });
 
     expect(mockOnCancel).toHaveBeenCalled();
   });
@@ -226,15 +269,17 @@ describe('ReplyModal', () => {
 
     vi.mocked(mockReplyAssistantService.getRelatedMessages).mockResolvedValue([]);
 
-    render(
-      <ReplyModal
-        visible={true}
-        message={mockMessage}
-        replyAssistantService={mockReplyAssistantService}
-        onSend={mockOnSend}
-        onCancel={mockOnCancel}
-      />
-    );
+    await act(async () => {
+      render(
+        <ReplyModal
+          visible={true}
+          message={mockMessage}
+          replyAssistantService={mockReplyAssistantService}
+          onSend={mockOnSend}
+          onCancel={mockOnCancel}
+        />
+      );
+    });
 
     await waitFor(() => {
       const textArea = screen.getByPlaceholderText('返信内容を入力または編集してください');
@@ -250,7 +295,9 @@ describe('ReplyModal', () => {
     });
 
     const regenerateButton = screen.getByText('AI再生成');
-    fireEvent.click(regenerateButton);
+    await act(async () => {
+      fireEvent.click(regenerateButton);
+    });
 
     await waitFor(() => {
       const textArea = screen.getByPlaceholderText('返信内容を入力または編集してください');
@@ -272,15 +319,17 @@ describe('ReplyModal', () => {
 
     vi.mocked(mockReplyAssistantService.getRelatedMessages).mockResolvedValue([]);
 
-    render(
-      <ReplyModal
-        visible={true}
-        message={mockMessage}
-        replyAssistantService={mockReplyAssistantService}
-        onSend={mockOnSend}
-        onCancel={mockOnCancel}
-      />
-    );
+    await act(async () => {
+      render(
+        <ReplyModal
+          visible={true}
+          message={mockMessage}
+          replyAssistantService={mockReplyAssistantService}
+          onSend={mockOnSend}
+          onCancel={mockOnCancel}
+        />
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByText('AI generation failed')).toBeInTheDocument();
@@ -308,15 +357,17 @@ describe('ReplyModal', () => {
 
     vi.mocked(mockReplyAssistantService.getRelatedMessages).mockResolvedValue([relatedMessage]);
 
-    render(
-      <ReplyModal
-        visible={true}
-        message={mockMessage}
-        replyAssistantService={mockReplyAssistantService}
-        onSend={mockOnSend}
-        onCancel={mockOnCancel}
-      />
-    );
+    await act(async () => {
+      render(
+        <ReplyModal
+          visible={true}
+          message={mockMessage}
+          replyAssistantService={mockReplyAssistantService}
+          onSend={mockOnSend}
+          onCancel={mockOnCancel}
+        />
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByText('他チャンネルの関連メッセージ:')).toBeInTheDocument();

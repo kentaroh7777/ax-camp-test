@@ -8,23 +8,24 @@ import { Message } from '../../../types/core/message.types';
 import { IAuthTokenManager } from '../../../types/infrastructure/auth.types';
 
 export class LineService extends BaseMessageClient {
-  private readonly proxyUrl = process.env.LINE_PROXY_URL || 'https://line-proxy.railway.app';
+  private proxyUrl: string;
   
   constructor(authTokenManager: IAuthTokenManager) {
     super(authTokenManager, ChannelType.LINE);
+    this.proxyUrl = process.env.PROXY_SERVER_URL + '/api/line';
   }
   
   protected getChannelName(): string {
     return 'LINE';
   }
   
-  async sendMessage(params: SendMessageParams): Promise<SendMessageResult> {
+  async sendMessage(params: any, channelToken?: string): Promise<SendMessageResult> {
     try {
-      const token = await this.getValidToken();
+      const token = channelToken || await this.getValidToken();
       
       const payload = {
         to: params.to,
-        messages: [
+        messages: params.messages || [
           {
             type: 'text',
             text: params.content,
@@ -32,7 +33,10 @@ export class LineService extends BaseMessageClient {
         ],
       };
       
-      const response = await fetch(`${this.proxyUrl}/api/line/message/push`, {
+      const fullUrl = `${this.proxyUrl}/message/push`;
+      console.log('LINE Service: Sending message to URL:', fullUrl);
+      
+      const response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,14 +46,15 @@ export class LineService extends BaseMessageClient {
       });
       
       if (!response.ok) {
-        throw new Error(`LINE API error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`LINE API error: ${response.status} ${response.statusText} - ${errorText}`);
       }
       
       const result = await response.json();
       
       return {
         success: true,
-        messageId: result.messageId || 'line-message-sent',
+        messageId: result.sentMessages?.[0]?.id || 'line-message-sent',
       };
     } catch (error) {
       return {
@@ -74,7 +79,7 @@ export class LineService extends BaseMessageClient {
         queryParams.append('since', params.since.toISOString());
       }
       
-      const response = await fetch(`${this.proxyUrl}/api/line/messages?${queryParams}`, {
+      const response = await fetch(`${this.proxyUrl}/messages?${queryParams}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -86,7 +91,7 @@ export class LineService extends BaseMessageClient {
       }
       
       const result = await response.json();
-      const messages = result.messages?.map((msg: any) => this.convertLineToMessage(msg)) || [];
+      const messages = result.messages || [];
       
       return {
         success: true,

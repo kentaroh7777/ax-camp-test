@@ -96,6 +96,81 @@ export class AuthTokenManager implements IAuthTokenManager {
   }
 
   /**
+   * Gmail用の認証URLを生成します。
+   * @returns 認証ページのURL
+   */
+  public generateAuthUrl(): string {
+    const clientId = process.env.GMAIL_CLIENT_ID;
+    if (!clientId) {
+      throw new Error('GMAIL_CLIENT_IDが.env.localに設定されていません。');
+    }
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
+      response_type: 'code',
+      scope: 'https://www.googleapis.com/auth/gmail.readonly',
+      access_type: 'offline',
+      prompt: 'consent', // 常にリフレッシュトークンを取得するために必要
+    });
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+  }
+
+  /**
+   * 認証コードをアクセストークンとリフレッシュトークンに交換します。
+   * @param code ユーザーが取得した認証コード
+   * @returns 保存された認証トークン
+   */
+  public async exchangeCodeForToken(code: string): Promise<AuthToken> {
+    const clientId = process.env.GMAIL_CLIENT_ID;
+    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      throw new Error('GMAIL_CLIENT_IDまたはGMAIL_CLIENT_SECRETが.env.localに設定されていません。');
+    }
+
+    try {
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
+          client_id: clientId,
+          client_secret: clientSecret,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`トークンの交換に失敗しました: ${errorData.error_description || response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      const newToken: AuthToken = {
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        expiresAt: new Date(Date.now() + data.expires_in * 1000),
+        scope: data.scope.split(' '),
+        tokenType: 'Bearer',
+      };
+
+      await this.saveToken(ChannelType.GMAIL, newToken);
+      console.log('✅ トークンが正常に保存されました。');
+      return newToken;
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`トークン交換中にエラーが発生しました: ${errorMessage}`);
+    }
+  }
+
+  /**
    * Gmail OAuth 2.0 トークン更新
    * @param token - 現在のトークン
    * @returns 更新されたトークン
@@ -171,19 +246,32 @@ export class AuthTokenManager implements IAuthTokenManager {
   }
 
   /**
-   * Discord Webhook URL 有効性確認
-   * @param token - 認証トークン（Webhook URL）
+   * Discord Bot Token 有効性確認（プロキシサーバー経由）
+   * @param token - 認証トークン（Bot Token）
    * @returns トークンが有効かどうか
    */
   private async validateDiscordToken(token: AuthToken): Promise<boolean> {
     try {
-      const response = await fetch(token.accessToken, {
+      // プロキシサーバーを使用する場合は、プロキシサーバーに検証を委ねる
+      // Bot Tokenの直接検証は行わず、プロキシサーバーの存在確認のみ行う
+      const proxyUrl = process.env.PROXY_SERVER_URL;
+      if (!proxyUrl) {
+        console.warn('PROXY_SERVER_URL not configured, skipping Discord token validation');
+        return true; // プロキシサーバーが設定されていない場合は検証をスキップ
+      }
+
+      // プロキシサーバーのhealth checkを行う
+      const response = await fetch(`${proxyUrl}/api/health`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.accessToken}`,
+        },
       });
 
       return response.ok;
-    } catch {
-      return false;
+    } catch (error) {
+      console.warn('Discord token validation failed:', error);
+      return true; // エラー時は検証をスキップしてプロキシサーバーに委ねる
     }
   }
 

@@ -1,6 +1,32 @@
+
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // Deprecated
+    removeListener: vi.fn(), // Deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+Object.defineProperty(window, 'getComputedStyle', {
+  writable: true,
+  value: (elt) => {
+    return {
+      getPropertyValue: (prop) => {
+        return '';
+      },
+    };
+  },
+});
 import { SettingsModal } from '../../../chrome-extension/src/components/settings/SettingsModal/SettingsModal';
 import { SettingsService } from '../../../chrome-extension/src/services/application/settings.service';
 import { AppSettings } from '../../../chrome-extension/src/types/services/settings.types';
@@ -65,14 +91,16 @@ describe('SettingsModal', () => {
   it('renders modal when visible', async () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByText('設定')).toBeInTheDocument();
@@ -84,15 +112,17 @@ describe('SettingsModal', () => {
     });
   });
 
-  it('does not render modal when not visible', () => {
-    render(
-      <SettingsModal
-        visible={false}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+  it('does not render modal when not visible', async () => {
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={false}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     expect(screen.queryByText('設定')).not.toBeInTheDocument();
   });
@@ -100,14 +130,16 @@ describe('SettingsModal', () => {
   it('loads settings on mount', async () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       expect(mockSettingsService.getSettings).toHaveBeenCalled();
@@ -130,14 +162,16 @@ describe('SettingsModal', () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(validSettings);
     vi.mocked(mockSettingsService.updateSettings).mockResolvedValue();
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     // フォームが完全に読み込まれるまで待機
     await waitFor(() => {
@@ -153,7 +187,9 @@ describe('SettingsModal', () => {
     
     // 保存ボタンをクリック
     const saveButton = screen.getByText('保存');
-    fireEvent.click(saveButton);
+    await act(async () => {
+      fireEvent.click(saveButton);
+    });
 
     await waitFor(() => {
       expect(mockSettingsService.updateSettings).toHaveBeenCalled();
@@ -164,18 +200,22 @@ describe('SettingsModal', () => {
   it('handles cancel button click', async () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       const cancelButton = screen.getByText('キャンセル');
-      fireEvent.click(cancelButton);
+      act(() => {
+        fireEvent.click(cancelButton);
+      });
     });
 
     expect(mockOnCancel).toHaveBeenCalled();
@@ -185,18 +225,22 @@ describe('SettingsModal', () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
     vi.mocked(mockSettingsService.resetSettings).mockResolvedValue();
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       const resetButton = screen.getByText('リセット');
-      fireEvent.click(resetButton);
+      act(() => {
+        fireEvent.click(resetButton);
+      });
     });
 
     await waitFor(() => {
@@ -208,14 +252,16 @@ describe('SettingsModal', () => {
   it('displays general settings tab', async () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByText('言語')).toBeInTheDocument();
@@ -229,18 +275,22 @@ describe('SettingsModal', () => {
   it('displays notification settings tab', async () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       const notificationTab = screen.getByText('通知');
-      fireEvent.click(notificationTab);
+      act(() => {
+        fireEvent.click(notificationTab);
+      });
     });
 
     await waitFor(() => {
@@ -253,18 +303,22 @@ describe('SettingsModal', () => {
   it('displays AI settings tab', async () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       const aiTab = screen.getByText('AI');
-      fireEvent.click(aiTab);
+      act(() => {
+        fireEvent.click(aiTab);
+      });
     });
 
     await waitFor(() => {
@@ -278,18 +332,22 @@ describe('SettingsModal', () => {
   it('displays channel settings tab', async () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       const channelTab = screen.getByText('チャンネル');
-      fireEvent.click(channelTab);
+      act(() => {
+        fireEvent.click(channelTab);
+      });
     });
 
     await waitFor(() => {
@@ -304,18 +362,22 @@ describe('SettingsModal', () => {
   it('displays UI settings tab', async () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       const uiTab = screen.getByText('UI');
-      fireEvent.click(uiTab);
+      act(() => {
+        fireEvent.click(uiTab);
+      });
     });
 
     await waitFor(() => {
@@ -329,14 +391,16 @@ describe('SettingsModal', () => {
   it('handles settings loading error', async () => {
     vi.mocked(mockSettingsService.getSettings).mockRejectedValue(new Error('Settings load error'));
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByText('設定の読み込みに失敗しました')).toBeInTheDocument();
@@ -347,18 +411,22 @@ describe('SettingsModal', () => {
     vi.mocked(mockSettingsService.getSettings).mockResolvedValue(mockSettings);
     vi.mocked(mockSettingsService.updateSettings).mockRejectedValue(new Error('Save error'));
 
-    render(
-      <SettingsModal
-        visible={true}
-        settingsService={mockSettingsService}
-        onCancel={mockOnCancel}
-        onSave={mockOnSave}
-      />
-    );
+    await act(async () => {
+      render(
+        <SettingsModal
+          visible={true}
+          settingsService={mockSettingsService}
+          onCancel={mockOnCancel}
+          onSave={mockOnSave}
+        />
+      );
+    });
 
     await waitFor(() => {
       const saveButton = screen.getByText('保存');
-      fireEvent.click(saveButton);
+      act(() => {
+        fireEvent.click(saveButton);
+      });
     });
 
     await waitFor(() => {

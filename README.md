@@ -30,6 +30,16 @@ multi-channel-reply-assistant/
 │   ├── public/                # 公開リソース
 │   ├── manifest.json          # 拡張機能マニフェスト
 │   └── webpack.config.js      # ビルド設定
+├── channel-proxy-server/       # プロキシサーバー
+│   ├── src/                   # サーバーソースコード
+│   │   ├── routes/            # API ルート
+│   │   ├── services/          # ビジネスロジック
+│   │   ├── middleware/        # ミドルウェア
+│   │   └── types/             # 型定義
+│   └── package.json           # サーバー依存関係
+├── scripts/                   # 管理スクリプト
+│   └── proxy-server.sh        # プロキシサーバー管理
+├── logs/                      # ログファイル
 ├── shared/                    # 共通ライブラリ
 ├── tests/                     # テストファイル
 └── docs/                      # ドキュメント
@@ -84,6 +94,57 @@ npm run type-check
 # リンター実行
 npm run lint
 ```
+
+### プロキシサーバー管理
+
+Discord、LINE 統合のためのプロキシサーバーを管理するスクリプトが用意されています。
+
+```bash
+# プロキシサーバーを起動
+./scripts/proxy-server.sh start
+
+# プロキシサーバーを停止
+./scripts/proxy-server.sh stop
+
+# プロキシサーバーを再起動
+./scripts/proxy-server.sh restart
+
+# サーバーステータスを確認
+./scripts/proxy-server.sh status
+
+# ログを表示
+./scripts/proxy-server.sh logs
+```
+
+#### ログ表示オプション
+
+```bash
+# 全ログを表示（デフォルト: 50行）
+./scripts/proxy-server.sh logs all
+
+# エラーログのみ表示
+./scripts/proxy-server.sh logs error
+
+# メインログのみ表示
+./scripts/proxy-server.sh logs main
+
+# 指定行数のログを表示
+./scripts/proxy-server.sh logs all 100
+```
+
+#### プロキシサーバーについて
+
+- **ポート**: 3000
+- **機能**: Discord Bot、LINE Webhook、メッセージキャッシュ
+- **ログ場所**: `logs/proxy-server.log`, `logs/proxy-error.log`
+- **認証**: テスト環境では無効化
+
+プロキシサーバーは以下のエンドポイントを提供します：
+- `GET /api/health` - ヘルスチェック
+- `POST /api/discord/send` - Discord メッセージ送信
+- `POST /api/line/message/push` - LINE メッセージ送信
+- `GET /api/line/messages` - LINE メッセージキャッシュ取得
+- `POST /api/webhook` - LINE Webhook 受信
 
 ## Chrome拡張機能のインストール
 

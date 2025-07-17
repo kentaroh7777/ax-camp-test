@@ -1,8 +1,12 @@
-const path = require('path');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const webpack = require('webpack');
+import path from 'path';
+import { fileURLToPath } from 'url';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import webpack from 'webpack';
 
-module.exports = {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default {
   mode: 'development',
   entry: {
     'background/service-worker': './src/background/service-worker.ts',
@@ -44,7 +48,7 @@ module.exports = {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
       'process.env.GMAIL_CLIENT_ID': JSON.stringify(process.env.GMAIL_CLIENT_ID || ''),
       'process.env.GMAIL_CLIENT_SECRET': JSON.stringify(process.env.GMAIL_CLIENT_SECRET || ''),
-      'process.env.LINE_PROXY_URL': JSON.stringify(process.env.LINE_PROXY_URL || 'https://line-proxy.railway.app')
+      'process.env.PROXY_SERVER_URL': JSON.stringify(process.env.PROXY_SERVER_URL || 'http://localhost:3000')
     }),
     new CopyWebpackPlugin({
       patterns: [

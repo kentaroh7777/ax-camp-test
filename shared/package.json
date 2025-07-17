@@ -2,6 +2,7 @@
   "name": "@multi-channel-reply-assistant/shared",
   "version": "1.0.0",
   "description": "Shared utilities and types for Multi-Channel Reply Assistant",
+  "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
