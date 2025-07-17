@@ -1,36 +1,47 @@
 {
   "totalTests": 7,
-  "passedTests": 6,
-  "failedTests": 1,
-  "successRate": 86,
+  "passedTests": 7,
+  "failedTests": 0,
+  "successRate": 100,
   "results": [
     {
       "name": "Gmail認証状態確認",
       "status": "passed",
       "message": "認証状態は有効です",
-      "duration": 0,
-      "timestamp": "2025-07-17T07:41:22.875Z"
+      "duration": 615,
+      "timestamp": "2025-07-17T08:06:16.203Z"
     },
     {
       "name": "本実装メッセージ取得",
-      "status": "failed",
-      "message": "メッセージ取得失敗: メッセージ取得失敗: Gmail API error: 401 Unauthorized",
-      "duration": 361,
-      "timestamp": "2025-07-17T07:41:23.238Z"
+      "status": "passed",
+      "message": "10件のメッセージを成功取得",
+      "messageCount": 10,
+      "unreadCount": 10,
+      "implementation": "本実装GmailService",
+      "authMethod": ".env.local設定",
+      "duration": 1228,
+      "timestamp": "2025-07-17T08:06:17.433Z"
     },
     {
       "name": "本実装メッセージ処理確認",
       "status": "passed",
-      "message": "分析対象メッセージなし",
-      "duration": 237,
-      "timestamp": "2025-07-17T07:41:23.481Z"
+      "message": "本実装機能の動作を確認",
+      "analyzedCount": 3,
+      "implementationTest": true,
+      "functions": [
+        "getMessages",
+        "convertGmailToMessage",
+        "extractEmailContent"
+      ],
+      "duration": 819,
+      "timestamp": "2025-07-17T08:06:18.252Z"
     },
     {
       "name": "Discord Message Send",
       "status": "passed",
       "message": "Successfully sent message to channel 1394492451317878804",
-      "duration": 635,
-      "timestamp": "2025-07-17T07:41:24.121Z"
+      "duration": 395,
+      "timestamp": "2025-07-17T08:06:18.649Z"
     },
     {
       "name": "Discord Message Retrieval",
@@ -38,22 +49,22 @@
       "message": "Discordメッセージ取得は現在未サポート (空リスト返却)",
       "messageCount": 0,
       "duration": 5,
-      "timestamp": "2025-07-17T07:41:24.127Z"
+      "timestamp": "2025-07-17T08:06:18.654Z"
     },
     {
       "name": "LINE Message Send",
       "status": "passed",
       "message": "Successfully sent message to user Uef5b6811e0ea47b39726288d1f867532",
-      "duration": 224,
-      "timestamp": "2025-07-17T07:41:24.353Z"
+      "duration": 203,
+      "timestamp": "2025-07-17T08:06:18.858Z"
     },
     {
       "name": "LINE Message Retrieval",
       "status": "passed",
-      "message": "Successfully retrieved 0 LINE messages",
-      "messageCount": 0,
+      "message": "Successfully retrieved 1 LINE messages",
+      "messageCount": 1,
       "duration": 5,
-      "timestamp": "2025-07-17T07:41:24.359Z"
+      "timestamp": "2025-07-17T08:06:18.864Z"
     }
   ]
 }

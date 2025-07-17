@@ -1,0 +1,54 @@
+{
+  "totalTests": 5,
+  "passedTests": 3,
+  "failedTests": 2,
+  "successRate": 60,
+  "results": [
+    {
+      "name": "プロキシサーバー接続確認",
+      "status": "passed",
+      "message": "プロキシサーバー接続とGmailエンドポイント確認済み",
+      "duration": 41,
+      "timestamp": "2025-07-17T08:25:56.707Z"
+    },
+    {
+      "name": "プロキシサーバー経由メッセージ取得",
+      "status": "passed",
+      "message": "10件のメッセージを成功取得",
+      "messageCount": 10,
+      "unreadCount": 10,
+      "implementation": "プロキシサーバー経由GmailService",
+      "authMethod": "プロキシサーバー認証バイパス",
+      "duration": 1018,
+      "timestamp": "2025-07-17T08:25:57.727Z"
+    },
+    {
+      "name": "プロキシサーバー経由メッセージ処理確認",
+      "status": "passed",
+      "message": "プロキシサーバー経由機能の動作を確認",
+      "analyzedCount": 3,
+      "implementationTest": true,
+      "functions": [
+        "getMessages",
+        "convertProxyToMessage",
+        "プロキシサーバー統一変換"
+      ],
+      "duration": 726,
+      "timestamp": "2025-07-17T08:25:58.454Z"
+    },
+    {
+      "name": "Discord Message Retrieval",
+      "status": "failed",
+      "message": "Discordメッセージ取得失敗: Failed to get data for key \"auth_tokens\": TypeError: Cannot read properties of undefined (reading 'auth_tokens')",
+      "duration": 0,
+      "timestamp": "2025-07-17T08:25:58.460Z"
+    },
+    {
+      "name": "LINE Message Retrieval",
+      "status": "failed",
+      "message": "LINEメッセージ取得失敗: Failed to get data for key \"auth_tokens\": TypeError: Cannot read properties of undefined (reading 'auth_tokens')",
+      "duration": 0,
+      "timestamp": "2025-07-17T08:25:58.463Z"
+    }
+  ]
+}
