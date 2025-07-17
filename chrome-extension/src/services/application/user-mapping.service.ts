@@ -33,8 +33,24 @@ export class UserMappingService implements IUserMappingService {
   }
   
   async getMapping(userId: string): Promise<UserMapping | null> {
+    console.log('[UserMapping] getMapping開始 - userId:', userId);
+    
     const mappings = await this.getAllMappings();
-    return mappings.find(mapping => mapping.id === userId) || null;
+    console.log('[UserMapping] 全マッピング数:', mappings.length);
+    
+    const result = mappings.find(mapping => mapping.id === userId) || null;
+    console.log('[UserMapping] 指定されたユーザーのマッピング見つかった:', result !== null);
+    
+    if (result) {
+      console.log('[UserMapping] 見つかったマッピング:', result);
+    } else {
+      console.log('[UserMapping] マッピングが見つかりませんでした。既存のマッピング一覧:');
+      mappings.forEach((mapping, index) => {
+        console.log(`  ${index + 1}. id: ${mapping.id}, name: ${mapping.name}`);
+      });
+    }
+    
+    return result;
   }
   
   async resolveUserMappings(messages: Message[]): Promise<ResolvedMessage[]> {
@@ -52,8 +68,16 @@ export class UserMappingService implements IUserMappingService {
   }
   
   async getAllMappings(): Promise<UserMapping[]> {
+    console.log('[UserMapping] getAllMappings開始');
+    
     const mappings = await this.storageRepository.get<UserMapping[]>(STORAGE_KEYS.USER_MAPPINGS);
-    return mappings || [];
+    console.log('[UserMapping] ストレージから取得したmappings:', mappings);
+    
+    const result = mappings || [];
+    console.log('[UserMapping] 返却する配列:', result);
+    console.log('[UserMapping] マッピング数:', result.length);
+    
+    return result;
   }
   
   private findUserMappingForMessage(message: Message, mappings: UserMapping[]): UserMapping | undefined {

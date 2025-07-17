@@ -120,46 +120,120 @@ export class ReplyAssistantService implements IReplyAssistantService {
       };
     }
   }
+
+  async generateReplyWithSameUser(context: ReplyContext): Promise<ReplyGenerationResult> {
+    try {
+      // 同一人物のコンテキストを強化したプロンプトを生成
+      const enhancedPrompt = this.llmService.optimizePrompt(context);
+      const reply = await this.llmService.generateReply(enhancedPrompt, context);
+      
+      return {
+        success: true,
+        reply,
+        confidence: 0.90, // 同一人物コンテキストがあるため信頼度を高く設定
+        tokensUsed: Math.ceil(reply.length / 4), // Approximation
+      };
+    } catch (error) {
+      return {
+        success: false,
+        reply: '',
+        confidence: 0,
+        tokensUsed: 0,
+        error: {
+          code: 'SAME_USER_REPLY_GENERATION_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+      };
+    }
+  }
   
   async getRelatedMessages(userId: string, originalMessage: Message): Promise<Message[]> {
+    console.log('[ReplyAssistant] getRelatedMessages開始 - userId:', userId);
+    console.log('[ReplyAssistant] originalMessage:', originalMessage);
+    
     const userMapping = await this.userMappingService.getMapping(userId);
-    if (!userMapping) return [];
+    console.log('[ReplyAssistant] userMapping取得結果:', userMapping);
+    
+    if (!userMapping) {
+      console.log('[ReplyAssistant] userMappingが見つからないため、空配列を返す');
+      return [];
+    }
     
     const relatedMessages: Message[] = [];
     const allClients = this.messageClientFactory.createAllClients();
+    console.log('[ReplyAssistant] 利用可能なクライアント:', Object.keys(allClients));
+    console.log('[ReplyAssistant] userMappingのチャンネル:', Object.keys(userMapping.channels));
     
     // Search related messages from each channel
     for (const [channel, channelInfo] of Object.entries(userMapping.channels)) {
-      const client = allClients[channel as ChannelType];
-      if (!client || !await client.isAuthenticated()) continue;
+      console.log(`[ReplyAssistant] チャンネル ${channel} の処理開始`);
+      console.log(`[ReplyAssistant] channelInfo:`, channelInfo);
       
+      const client = allClients[channel as ChannelType];
+      if (!client) {
+        console.log(`[ReplyAssistant] ${channel} のクライアントが見つかりません`);
+        continue;
+      }
+      
+      const isAuthenticated = await client.isAuthenticated();
+      console.log(`[ReplyAssistant] ${channel} の認証状態:`, isAuthenticated);
+      
+      if (!isAuthenticated) {
+        console.log(`[ReplyAssistant] ${channel} が認証されていないため、スキップ`);
+        continue;
+      }
+      
+      console.log(`[ReplyAssistant] ${channel} からメッセージを取得中...`);
       const result = await client.getMessages({ 
         limit: 5,
         since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Past 7 days
       });
       
+      console.log(`[ReplyAssistant] ${channel} メッセージ取得結果:`, result);
+      
       if (result.success) {
-        const userMessages = result.messages.filter(msg => 
-          this.isMessageFromUser(msg, channelInfo)
-        );
+        console.log(`[ReplyAssistant] ${channel} から ${result.messages.length} 件のメッセージを取得`);
+        
+        const userMessages = result.messages.filter(msg => {
+          const isFromUser = this.isMessageFromUser(msg, channelInfo);
+          console.log(`[ReplyAssistant] メッセージ判定 - from: ${msg.from}, isFromUser: ${isFromUser}`);
+          return isFromUser;
+        });
+        
+        console.log(`[ReplyAssistant] ${channel} でユーザーからの ${userMessages.length} 件のメッセージを特定`);
         relatedMessages.push(...userMessages);
+      } else {
+        console.log(`[ReplyAssistant] ${channel} メッセージ取得失敗:`, result.error);
       }
     }
     
-    return relatedMessages.sort((a, b) => 
+    const sortedMessages = relatedMessages.sort((a, b) => 
       b.timestamp.getTime() - a.timestamp.getTime()
     );
+    
+    console.log(`[ReplyAssistant] 最終的に ${sortedMessages.length} 件の関連メッセージを返す`);
+    return sortedMessages;
   }
   
   private isMessageFromUser(message: Message, channelInfo: any): boolean {
+    console.log(`[ReplyAssistant] isMessageFromUser判定開始 - channel: ${message.channel}, from: ${message.from}`);
+    console.log(`[ReplyAssistant] channelInfo:`, channelInfo);
+    
     switch (message.channel) {
       case ChannelType.GMAIL:
-        return message.from.includes(channelInfo.email);
+        const gmailMatch = message.from.includes(channelInfo.email);
+        console.log(`[ReplyAssistant] Gmail判定 - ${message.from} includes ${channelInfo.email}: ${gmailMatch}`);
+        return gmailMatch;
       case ChannelType.DISCORD:
-        return message.from.includes(channelInfo.username);
+        const discordMatch = message.from.includes(channelInfo.username);
+        console.log(`[ReplyAssistant] Discord判定 - ${message.from} includes ${channelInfo.username}: ${discordMatch}`);
+        return discordMatch;
       case ChannelType.LINE:
-        return message.from === channelInfo.userId;
+        const lineMatch = message.from === channelInfo.userId;
+        console.log(`[ReplyAssistant] LINE判定 - ${message.from} === ${channelInfo.userId}: ${lineMatch}`);
+        return lineMatch;
       default:
+        console.log(`[ReplyAssistant] 未知のチャンネル: ${message.channel}`);
         return false;
     }
   }

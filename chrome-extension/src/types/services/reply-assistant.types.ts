@@ -13,6 +13,9 @@ export interface IReplyAssistantService {
   // Generate AI reply suggestion
   generateReply(context: ReplyContext): Promise<ReplyGenerationResult>;
   
+  // Generate AI reply suggestion with same user context enhanced
+  generateReplyWithSameUser(context: ReplyContext): Promise<ReplyGenerationResult>;
+  
   // Get related messages
   getRelatedMessages(userId: string, originalMessage: Message): Promise<Message[]>;
 }
@@ -47,7 +50,9 @@ export interface ReplyContext {
     tone: 'formal' | 'casual' | 'friendly';
     language: string;
     includeContext: boolean;
+    includeSameUserContext?: boolean; // 同一人物コンテキスト強化フラグ
   };
+  additionalPrompt?: string; // ユーザーからの追加指示
 }
 
 // Reply generation result

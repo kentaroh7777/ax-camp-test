@@ -13,7 +13,7 @@ import { MessageClientFactory } from '../../services/channel/base/message-client
 import { ChromeStorageRepository } from '../../services/infrastructure/chrome-storage.repository';
 import { AuthTokenManager } from '../../services/infrastructure/auth-token.manager';
 import { SendMessageParams } from '../../types/core/message.types';
-import { ChannelType } from '../../types/core/channel.types';
+import { ChannelType, Priority } from '../../types/core/channel.types';
 import './PopupApp.styles.css';
 
 const { Content } = Layout;
@@ -40,6 +40,67 @@ const PopupApp: React.FC<PopupAppProps> = () => {
     llmService
   );
   const settingsService = new SettingsService(chromeStorageRepository);
+
+  // デモユーザーマッピング自動初期化
+  useEffect(() => {
+    const initializeDemoUserMapping = async () => {
+      try {
+        console.log('🎭 デモユーザーマッピング初期化チェック開始');
+        
+        const existingMappings = await userMappingService.getAllMappings();
+        console.log('📊 既存マッピング数:', existingMappings.length);
+        
+        // 林健太郎のマッピングが存在するかチェック
+        const hayashiMapping = existingMappings.find(mapping => 
+          mapping.name === '林健太郎' || 
+          mapping.channels[ChannelType.GMAIL]?.email === 'kh@h-fpo.com'
+        );
+        
+        if (!hayashiMapping) {
+          console.log('🏗️ 林健太郎のデモユーザーマッピングを作成中...');
+          
+          const demoMapping = {
+            name: '林健太郎',
+            channels: {
+              [ChannelType.GMAIL]: {
+                email: 'kh@h-fpo.com',
+                userId: 'kh@h-fpo.com',
+                displayName: '林FP事務所 林健太郎'
+              },
+              [ChannelType.DISCORD]: {
+                username: 'tama4420',
+                userId: '1394492451317878804',
+                displayName: 'tama4420'
+              },
+              [ChannelType.LINE]: {
+                displayName: '林健太郎',
+                userId: 'Uef5b6811e0ea47b39726288d1f867532'
+              }
+            },
+            priority: Priority.HIGH,
+            tags: ['FP事務所', 'クライアント', 'デモユーザー']
+          };
+          
+          const createdMapping = await userMappingService.createMapping(demoMapping);
+          console.log('✅ デモユーザーマッピングを作成しました:', createdMapping.id);
+          console.log('📧 Gmail:', createdMapping.channels[ChannelType.GMAIL]?.email);
+          console.log('💬 Discord:', createdMapping.channels[ChannelType.DISCORD]?.username);
+          console.log('📱 LINE:', createdMapping.channels[ChannelType.LINE]?.userId);
+          
+          messageApi.success('デモユーザー「林健太郎」のアカウント紐づけを初期化しました');
+        } else {
+          console.log('ℹ️ 林健太郎のユーザーマッピングは既に存在します:', hayashiMapping.id);
+        }
+      } catch (error) {
+        console.error('❌ デモユーザーマッピング初期化エラー:', error);
+        messageApi.error('デモユーザーマッピングの初期化に失敗しました');
+      }
+    };
+    
+    // 少し遅延してから実行（他の初期化処理の後）
+    const timer = setTimeout(initializeDemoUserMapping, 1000);
+    return () => clearTimeout(timer);
+  }, [userMappingService, messageApi]);
 
   const handleReplyClick = (message: ResolvedMessage) => {
     setSelectedMessage(message);

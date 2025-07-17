@@ -32,6 +32,7 @@ export const ReplyModal: React.FC<ReplyModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [additionalPrompt, setAdditionalPrompt] = useState('');
 
   useEffect(() => {
     console.log('[ReplyModal] useEffect呼び出し - visible:', visible, 'message:', message);
@@ -41,6 +42,7 @@ export const ReplyModal: React.FC<ReplyModalProps> = ({
       setError(null);
       setReplyContent('');
       setGeneratedReply('');
+      setAdditionalPrompt('');
       generateReply();
       fetchRelatedMessages();
     } else {
@@ -72,6 +74,7 @@ export const ReplyModal: React.FC<ReplyModalProps> = ({
           language: 'ja',
           includeContext: true,
         },
+        additionalPrompt: additionalPrompt.trim() || undefined,
       };
 
       console.log('[ReplyModal] ReplyContextを作成:', context);
@@ -98,17 +101,110 @@ export const ReplyModal: React.FC<ReplyModalProps> = ({
     }
   };
 
-  const fetchRelatedMessages = async () => {
-    if (!message?.resolvedUser) return;
+  const generateReplyWithSameUser = async () => {
+    console.log('[ReplyModal] generateReplyWithSameUser呼び出し開始');
+    console.log('[ReplyModal] message:', message);
+    
+    if (!message) {
+      console.log('[ReplyModal] messageがnullのため、generateReplyWithSameUserを終了');
+      return;
+    }
+    
+    console.log('[ReplyModal] 同一人物の返信生成を開始...');
+    setGenerating(true);
+    setError(null);
     
     try {
+      // 同一人物の他チャンネルメッセージを明示的に取得
+      let sameUserMessages: Message[] = [];
+      if (message.resolvedUser) {
+        console.log('[ReplyModal] 同一人物のメッセージを取得中:', message.resolvedUser.name);
+        sameUserMessages = await replyAssistantService.getRelatedMessages(
+          message.resolvedUser.id,
+          message
+        );
+        console.log('[ReplyModal] 同一人物のメッセージ取得完了:', sameUserMessages.length, '件');
+      }
+
+      const context: ReplyContext = {
+        originalMessage: message,
+        relatedMessages: sameUserMessages,
+        userMapping: message.resolvedUser,
+        conversationHistory: [],
+        userPreferences: {
+          tone: 'friendly',
+          language: 'ja',
+          includeContext: true,
+          includeSameUserContext: true,
+        },
+        additionalPrompt: additionalPrompt.trim() || undefined,
+      };
+
+      console.log('[ReplyModal] 同一人物ReplyContextを作成:', context);
+      console.log('[ReplyModal] 関連メッセージの詳細:');
+      sameUserMessages.forEach((msg, index) => {
+        console.log(`  ${index + 1}. [${msg.channel}] from: ${msg.from}, content: "${msg.content}"`);
+      });
+      console.log('[ReplyModal] 追加プロンプト:', additionalPrompt);
+      console.log('[ReplyModal] replyAssistantService.generateReplyWithSameUser呼び出し...');
+      
+      const result = await replyAssistantService.generateReplyWithSameUser(context);
+      
+      console.log('[ReplyModal] generateReplyWithSameUser結果:', result);
+      
+      if (result.success) {
+        console.log('[ReplyModal] 同一人物返信生成成功:', result.reply);
+        setGeneratedReply(result.reply);
+        setReplyContent(result.reply);
+        // 関連メッセージも更新
+        setRelatedMessages(sameUserMessages);
+      } else {
+        console.error('[ReplyModal] 同一人物返信生成失敗:', result.error);
+        setError(result.error?.message || 'AI同一人物返信の生成に失敗しました');
+      }
+    } catch (error) {
+      console.error('[ReplyModal] generateReplyWithSameUserでエラー:', error);
+      setError('同一人物返信生成中にエラーが発生しました');
+    } finally {
+      console.log('[ReplyModal] generateReplyWithSameUser処理完了');
+      setGenerating(false);
+    }
+  };
+
+  const fetchRelatedMessages = async () => {
+    console.log('[ReplyModal] fetchRelatedMessages開始');
+    console.log('[ReplyModal] message?.resolvedUser:', message?.resolvedUser);
+    
+    if (!message?.resolvedUser) {
+      console.log('[ReplyModal] resolvedUserが存在しないため、fetchRelatedMessagesを終了');
+      return;
+    }
+    
+    try {
+      console.log('[ReplyModal] getRelatedMessages呼び出し - userId:', message.resolvedUser.id);
+      console.log('[ReplyModal] getRelatedMessages呼び出し - originalMessage:', message);
+      
       const related = await replyAssistantService.getRelatedMessages(
         message.resolvedUser.id,
         message
       );
+      
+      console.log('[ReplyModal] getRelatedMessages結果:', related);
+      console.log('[ReplyModal] 関連メッセージ数:', related.length);
+      
       setRelatedMessages(related);
+      
+      if (related.length > 0) {
+        console.log('[ReplyModal] 関連メッセージの詳細:');
+        related.forEach((msg, index) => {
+          console.log(`  ${index + 1}. [${msg.channel}] from: ${msg.from}, content: "${msg.content.substring(0, 50)}..."`);
+        });
+      } else {
+        console.log('[ReplyModal] 関連メッセージが見つかりませんでした');
+      }
     } catch (error) {
-      console.error('Failed to fetch related messages:', error);
+      console.error('[ReplyModal] 関連メッセージ取得でエラー:', error);
+      setError('関連メッセージの取得に失敗しました: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -178,15 +274,6 @@ export const ReplyModal: React.FC<ReplyModalProps> = ({
       className="reply-modal"
       footer={[
         <Button 
-          key="regenerate" 
-          icon={<ReloadOutlined />}
-          onClick={generateReply} 
-          loading={generating}
-          disabled={loading}
-        >
-          AI再生成
-        </Button>,
-        <Button 
           key="cancel" 
           icon={<CloseOutlined />}
           onClick={onCancel}
@@ -248,6 +335,43 @@ export const ReplyModal: React.FC<ReplyModalProps> = ({
         )}
 
         <Divider />
+
+        {/* Additional Prompt Input */}
+        <div className="additional-prompt-section">
+          <Title level={5} style={{ margin: 0, marginBottom: 8 }}>
+            追加指示（任意）:
+          </Title>
+          <TextArea
+            value={additionalPrompt}
+            onChange={(e) => setAdditionalPrompt(e.target.value)}
+            placeholder="AIへの追加指示を入力してください（例：もっとカジュアルに、具体的な提案を含めて、など）"
+            rows={2}
+            disabled={loading || generating}
+            style={{ marginBottom: 12 }}
+          />
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <Button 
+              icon={<ReloadOutlined />}
+              onClick={generateReply} 
+              loading={generating}
+              disabled={loading}
+              size="small"
+            >
+              AI再生成
+            </Button>
+            <Button 
+              icon={<ReloadOutlined />}
+              onClick={generateReplyWithSameUser} 
+              loading={generating}
+              disabled={loading || !message?.resolvedUser}
+              className="ant-btn-same-user"
+              title="同一人物の他チャンネルメッセージを含めてAI返信を生成します"
+              size="small"
+            >
+              AI同一人物再生成
+            </Button>
+          </div>
+        </div>
 
         {/* AI Generated Reply */}
         <div className="ai-reply-section">

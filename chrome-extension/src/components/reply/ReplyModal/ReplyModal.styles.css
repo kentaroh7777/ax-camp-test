@@ -92,6 +92,47 @@
   min-height: 100px;
 }
 
+.additional-prompt-section {
+  margin: 16px 0;
+  padding: 16px;
+  background-color: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+}
+
+.additional-prompt-section .ant-input {
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  background-color: white;
+}
+
+.additional-prompt-section .ant-input:focus {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.additional-prompt-section .ant-btn {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.additional-prompt-section .ant-btn-same-user {
+  background-color: #52c41a;
+  border-color: #52c41a;
+  color: white;
+}
+
+.additional-prompt-section .ant-btn-same-user:hover {
+  background-color: #73d13d;
+  border-color: #73d13d;
+}
+
+.additional-prompt-section .ant-btn-same-user:disabled {
+  background-color: #f5f5f5;
+  border-color: #d9d9d9;
+  color: #00000040;
+}
+
 .reply-modal .ant-alert {
   border-radius: 6px;
 }

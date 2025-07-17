@@ -139,6 +139,11 @@ test.describe('Chrome Extension Message Reply AI Generation Tests', () => {
     const page = await context.newPage();
     const popupUrl = `chrome-extension://${extensionId}/popup.html`;
     
+    const consoleLogs: string[] = [];
+    page.on('console', (msg: ConsoleMessage) => {
+      consoleLogs.push(`${msg.type()}: ${msg.text()}`);
+    });
+    
     try {
       await page.goto(popupUrl);
       await page.waitForTimeout(3000);
@@ -178,6 +183,68 @@ test.describe('Chrome Extension Message Reply AI Generation Tests', () => {
         const modalTitle = await page.locator('.ant-modal-title').first().textContent();
         expect(modalTitle).toContain('返信');
         console.log('📝 モーダルタイトル:', modalTitle);
+
+        // === 関連メッセージデバッグ処理を追加 ===
+        console.log('🔍 関連メッセージデバッグ開始');
+        
+        // 関連メッセージセクションの存在確認
+        const relatedMessagesSection = await page.locator('.related-messages').first();
+        const relatedMessagesSectionExists = await relatedMessagesSection.count() > 0;
+        console.log('📋 関連メッセージセクションの存在:', relatedMessagesSectionExists);
+        
+        if (relatedMessagesSectionExists) {
+          const relatedMessagesContent = await relatedMessagesSection.textContent();
+          console.log('📋 関連メッセージセクション内容:', relatedMessagesContent);
+          
+          const relatedMessageItems = await page.locator('.related-message-item').all();
+          console.log('📋 関連メッセージアイテム数:', relatedMessageItems.length);
+        } else {
+          console.log('⚠️ 関連メッセージセクションが見つかりません');
+        }
+        
+        // モーダル全体の内容確認
+        const modalContent = await replyModal.textContent();
+        console.log('📝 モーダル全体の内容（最初の500文字）:', modalContent?.substring(0, 500) + '...');
+        
+        // 追加で5秒待機して関連メッセージ取得処理の完了を待つ
+        console.log('⏳ 関連メッセージ取得完了を待機中...');
+        await page.waitForTimeout(5000);
+        
+        // 再度関連メッセージの確認
+        const finalRelatedMessagesSection = await page.locator('.related-messages').first();
+        const finalRelatedMessagesSectionExists = await finalRelatedMessagesSection.count() > 0;
+        console.log('📋 最終的な関連メッセージセクションの存在:', finalRelatedMessagesSectionExists);
+        
+        // 最終状態のスクリーンショット
+        await page.screenshot({ 
+          path: 'tests/e2e/screenshots/reply-test-modal-final-state.png',
+          fullPage: true
+        });
+        
+        // 収集されたコンソールログを関連メッセージ関連のものに絞って表示
+        console.log('🔍 関連メッセージ関連のコンソールログ:');
+        const relatedLogs = consoleLogs.filter(log => 
+          log.includes('関連メッセージ') || 
+          log.includes('getRelatedMessages') || 
+          log.includes('fetchRelatedMessages') ||
+          log.includes('UserMapping') ||
+          log.includes('ReplyAssistant') ||
+          log.includes('isMessageFromUser')
+        );
+        
+        if (relatedLogs.length > 0) {
+          relatedLogs.forEach((log, index) => {
+            console.log(`   🔍 ${index + 1}: ${log}`);
+          });
+        } else {
+          console.log('⚠️ 関連メッセージ関連のログが見つかりません');
+          
+          // 全てのログから最後の20件を表示
+          console.log('📝 最新20件のコンソールログ:');
+          consoleLogs.slice(-20).forEach((log, index) => {
+            console.log(`   📝 ${index + 1}: ${log}`);
+          });
+        }
 
       } else {
         console.log('⚠️ 返信ボタンが見つかりません（メッセージがない可能性）');
