@@ -168,56 +168,68 @@ export const UnifiedInbox: React.FC<UnifiedInboxProps> = ({
         <List
           className="message-list"
           dataSource={messages}
-          renderItem={(message) => (
-            <List.Item
-              key={message.id}
-              actions={[
-                <Button 
-                  key="reply" 
-                  type="primary" 
-                  size="small"
-                  onClick={() => onReplyClick(message)}
+          renderItem={(message) => {
+            try {
+              console.log('UnifiedInbox: Rendering message:', message);
+              return (
+                <List.Item
+                  key={message.id}
+                  actions={[
+                    <Button 
+                      key="reply" 
+                      type="primary" 
+                      size="small"
+                      onClick={() => onReplyClick(message)}
+                    >
+                      返信
+                    </Button>
+                  ]}
                 >
-                  返信
-                </Button>
-              ]}
-            >
-              <List.Item.Meta
-                avatar={
-                  <Badge 
-                    count={message.isUnread ? 1 : 0} 
-                    size="small"
-                    offset={[-3, 3]}
-                  >
-                    {getChannelIcon(message.channel)}
-                  </Badge>
-                }
-                title={
-                  <Space>
-                    <Text strong>
-                      {message.resolvedUser?.name || message.from}
-                    </Text>
-                    <Text type="secondary">
-                      &lt;{getChannelDisplayName(message.channel)}&gt;
-                    </Text>
-                    <Text type="secondary">
-                      {formatTimestamp(message.timestamp)}
-                    </Text>
-                  </Space>
-                }
-                description={
-                  <div className="message-content">
-                    {getMessageTitle(message) && (
-                      <Text strong style={{ display: 'block', marginBottom: 4 }}>
-                        {getMessageTitle(message)}
-                      </Text>
-                    )}
-                    <Text>{getMessagePreview(message)}</Text>
-                  </div>
-                }
-              />
-            </List.Item>
-          )}
+                  <List.Item.Meta
+                    avatar={
+                      <Badge 
+                        count={message.isUnread ? 1 : 0} 
+                        size="small"
+                        offset={[-3, 3]}
+                      >
+                        {getChannelIcon(message.channel)}
+                      </Badge>
+                    }
+                    title={
+                      <Space>
+                        <Text strong>
+                          {message.resolvedUser?.name || message.from}
+                        </Text>
+                        <Text type="secondary">
+                          &lt;{getChannelDisplayName(message.channel)}&gt;
+                        </Text>
+                        <Text type="secondary">
+                          {formatTimestamp(message.timestamp)}
+                        </Text>
+                      </Space>
+                    }
+                    description={
+                      <div className="message-content">
+                        {getMessageTitle(message) && (
+                          <Text strong style={{ display: 'block', marginBottom: 4 }}>
+                            {getMessageTitle(message)}
+                          </Text>
+                        )}
+                        <Text>{getMessagePreview(message)}</Text>
+                      </div>
+                    }
+                  />
+                </List.Item>
+              );
+            } catch (error) {
+              console.error('UnifiedInbox: Error rendering message:', error, message);
+              return (
+                <List.Item key={message.id}>
+                  <Text type="danger">メッセージ表示エラー: {error instanceof Error ? error.message : '不明なエラー'}</Text>
+                </List.Item>
+              );
+            }
+          }}
         />
       </Spin>
     </div>

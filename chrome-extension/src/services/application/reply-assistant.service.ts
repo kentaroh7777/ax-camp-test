@@ -27,7 +27,11 @@ export class ReplyAssistantService implements IReplyAssistantService {
         const client = allClients[channel];
         const isAuthenticated = await client.isAuthenticated();
         
+        console.log(`ReplyAssistantService: ${channel} isAuthenticated:`, isAuthenticated);
+        console.log(`ReplyAssistantService: PROXY_AUTH_ENABLE:`, process.env.PROXY_AUTH_ENABLE);
+        
         if (!isAuthenticated) {
+          console.log(`ReplyAssistantService: ${channel} not authenticated, skipping`);
           return { 
             channel, 
             success: false, 
@@ -35,6 +39,8 @@ export class ReplyAssistantService implements IReplyAssistantService {
             error: 'Not authenticated' 
           };
         }
+        
+        console.log(`ReplyAssistantService: ${channel} fetching messages...`);
         
         const result = await client.getMessages({ 
           unreadOnly: true, 

@@ -7,7 +7,7 @@ import crypto from 'crypto';
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   // ADDED: Skip authentication if AUTH_DISABLED is set to true
   if (process.env.PROXY_AUTH_ENABLE === 'false') {
-    logger.warn('Authentication is disabled. Skipping all auth checks.');
+    logger.warn(`Authentication is disabled. Request from ${req.headers['user-agent']}. Path: ${req.path}. Skipping all auth checks.`);
     (req as any).isAuthenticated = true;
     (req as any).lineAccessToken = 'auth-disabled-mock-token';
     return next();
@@ -22,6 +22,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 
   try {
     const authorization = req.headers.authorization;
+    logger.warn(`Authentication required. Request from ${req.headers['user-agent']}. Path: ${req.path}. Authorization header: ${authorization ? 'present' : 'missing'}. PROXY_AUTH_ENABLE: ${process.env.PROXY_AUTH_ENABLE}`);
     
     // Check if authorization header is present
     if (!authorization) {

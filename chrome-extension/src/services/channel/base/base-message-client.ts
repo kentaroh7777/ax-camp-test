@@ -19,10 +19,25 @@ export abstract class BaseMessageClient implements IMessageClient {
   abstract authenticate(credentials?: any): Promise<AuthResult>;
   
   async isAuthenticated(): Promise<boolean> {
-    const token = await this.authTokenManager.getToken(this.channel);
-    if (!token) return false;
+    // プロキシサーバーの認証が無効の場合はスキップ
+    const proxyAuthEnabled = process.env.PROXY_AUTH_ENABLE;
+    console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - PROXY_AUTH_ENABLE:`, proxyAuthEnabled);
     
-    return await this.authTokenManager.validateToken(this.channel, token);
+    if (proxyAuthEnabled === 'false') {
+      console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - Auth bypassed, returning true`);
+      return true;
+    }
+    
+    console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - Auth required, checking token`);
+    const token = await this.authTokenManager.getToken(this.channel);
+    if (!token) {
+      console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - No token found`);
+      return false;
+    }
+    
+    const isValid = await this.authTokenManager.validateToken(this.channel, token);
+    console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - Token valid:`, isValid);
+    return isValid;
   }
   
   getChannelInfo(): ChannelInfo {
@@ -36,6 +51,12 @@ export abstract class BaseMessageClient implements IMessageClient {
   protected abstract getChannelName(): string;
   
   protected async getValidToken(): Promise<string> {
+    // プロキシサーバーの認証が無効の場合はダミートークンを返す
+    const proxyAuthEnabled = process.env.PROXY_AUTH_ENABLE;
+    if (proxyAuthEnabled === 'false') {
+      return 'dummy-token';
+    }
+    
     const token = await this.authTokenManager.getToken(this.channel);
     if (!token) {
       throw new Error(`No authentication token found for ${this.channel}`);

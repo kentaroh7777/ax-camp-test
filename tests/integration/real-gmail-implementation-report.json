@@ -1,16 +1,59 @@
 {
-  "totalTests": 1,
-  "passedTests": 1,
-  "failedTests": 0,
-  "successRate": 100,
+  "totalTests": 7,
+  "passedTests": 6,
+  "failedTests": 1,
+  "successRate": 86,
   "results": [
+    {
+      "name": "Gmail認証状態確認",
+      "status": "passed",
+      "message": "認証状態は有効です",
+      "duration": 0,
+      "timestamp": "2025-07-17T07:41:22.875Z"
+    },
+    {
+      "name": "本実装メッセージ取得",
+      "status": "failed",
+      "message": "メッセージ取得失敗: メッセージ取得失敗: Gmail API error: 401 Unauthorized",
+      "duration": 361,
+      "timestamp": "2025-07-17T07:41:23.238Z"
+    },
+    {
+      "name": "本実装メッセージ処理確認",
+      "status": "passed",
+      "message": "分析対象メッセージなし",
+      "duration": 237,
+      "timestamp": "2025-07-17T07:41:23.481Z"
+    },
+    {
+      "name": "Discord Message Send",
+      "status": "passed",
+      "message": "Successfully sent message to channel 1394492451317878804",
+      "duration": 635,
+      "timestamp": "2025-07-17T07:41:24.121Z"
+    },
     {
       "name": "Discord Message Retrieval",
       "status": "passed",
       "message": "Discordメッセージ取得は現在未サポート (空リスト返却)",
       "messageCount": 0,
-      "duration": 75,
-      "timestamp": "2025-07-17T03:21:22.862Z"
+      "duration": 5,
+      "timestamp": "2025-07-17T07:41:24.127Z"
+    },
+    {
+      "name": "LINE Message Send",
+      "status": "passed",
+      "message": "Successfully sent message to user Uef5b6811e0ea47b39726288d1f867532",
+      "duration": 224,
+      "timestamp": "2025-07-17T07:41:24.353Z"
+    },
+    {
+      "name": "LINE Message Retrieval",
+      "status": "passed",
+      "message": "Successfully retrieved 0 LINE messages",
+      "messageCount": 0,
+      "duration": 5,
+      "timestamp": "2025-07-17T07:41:24.359Z"
     }
   ]
 }

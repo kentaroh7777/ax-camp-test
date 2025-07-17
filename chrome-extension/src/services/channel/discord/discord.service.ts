@@ -72,7 +72,10 @@ export class DiscordService extends BaseMessageClient {
   
   async getMessages(params: GetMessagesParams): Promise<GetMessagesResult> {
     try {
+      console.log(`DiscordService.getMessages: Starting request...`);
       const token = await this.getValidToken();
+      console.log(`DiscordService.getMessages: Token obtained: ${token}`);
+      
       const queryParams = new URLSearchParams({
         limit: (params.limit || 50).toString(),
       });
@@ -81,27 +84,40 @@ export class DiscordService extends BaseMessageClient {
       }
 
       const fullUrl = `${this.proxyUrl}/messages?${queryParams.toString()}`;
+      console.log(`DiscordService.getMessages: Requesting URL: ${fullUrl}`);
+      console.log(`DiscordService.getMessages: Headers:`, { 'Authorization': `Bearer ${token}` });
+      
       const response = await fetch(fullUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
+      
+      console.log(`DiscordService.getMessages: Response status: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.log(`DiscordService.getMessages: Error response:`, errorText);
         throw new Error(`Discord Proxy error: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       const result = await response.json();
+      console.log(`DiscordService.getMessages: Response result:`, result);
 
       if (!result.success) {
         throw new Error(`Discord Proxy reported failure: ${result.error?.message || 'Unknown error'}`);
       }
 
+      // Convert timestamp strings to Date objects
+      const convertedMessages = (result.messages || []).map((message: any) => ({
+        ...message,
+        timestamp: new Date(message.timestamp)
+      }));
+
       return {
         success: true,
-        messages: result.messages || [],
+        messages: convertedMessages,
         hasMore: result.hasMore || false,
       };
     } catch (error) {

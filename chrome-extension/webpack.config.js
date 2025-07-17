@@ -2,6 +2,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import webpack from 'webpack';
+import dotenv from 'dotenv';
+
+// 環境変数を読み込み（.env.localが存在する場合）
+dotenv.config({ path: '.env.local' });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,7 +52,8 @@ export default {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
       'process.env.GMAIL_CLIENT_ID': JSON.stringify(process.env.GMAIL_CLIENT_ID || ''),
       'process.env.GMAIL_CLIENT_SECRET': JSON.stringify(process.env.GMAIL_CLIENT_SECRET || ''),
-      'process.env.PROXY_SERVER_URL': JSON.stringify(process.env.PROXY_SERVER_URL || 'http://localhost:3000')
+      'process.env.PROXY_SERVER_URL': JSON.stringify(process.env.PROXY_SERVER_URL || 'http://localhost:3000'),
+      'process.env.PROXY_AUTH_ENABLE': JSON.stringify(process.env.PROXY_AUTH_ENABLE || 'false')
     }),
     new CopyWebpackPlugin({
       patterns: [

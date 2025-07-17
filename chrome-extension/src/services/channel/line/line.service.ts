@@ -69,7 +69,9 @@ export class LineService extends BaseMessageClient {
   
   async getMessages(params: GetMessagesParams): Promise<GetMessagesResult> {
     try {
+      console.log(`LineService.getMessages: Starting request...`);
       const token = await this.getValidToken();
+      console.log(`LineService.getMessages: Token obtained: ${token}`);
       
       const queryParams = new URLSearchParams({
         limit: (params.limit || 50).toString(),
@@ -79,23 +81,37 @@ export class LineService extends BaseMessageClient {
         queryParams.append('since', params.since.toISOString());
       }
       
-      const response = await fetch(`${this.proxyUrl}/messages?${queryParams}`, {
+      const fullUrl = `${this.proxyUrl}/messages?${queryParams}`;
+      console.log(`LineService.getMessages: Requesting URL: ${fullUrl}`);
+      console.log(`LineService.getMessages: Headers:`, { 'Authorization': `Bearer ${token}` });
+      
+      const response = await fetch(fullUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
       
+      console.log(`LineService.getMessages: Response status: ${response.status} ${response.statusText}`);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.log(`LineService.getMessages: Error response:`, errorText);
         throw new Error(`LINE API error: ${response.status} ${response.statusText}`);
       }
       
       const result = await response.json();
-      const messages = result.messages || [];
+      console.log(`LineService.getMessages: Response result:`, result);
+      
+      // Convert timestamp strings to Date objects
+      const convertedMessages = (result.messages || []).map((message: any) => ({
+        ...message,
+        timestamp: new Date(message.timestamp)
+      }));
       
       return {
         success: true,
-        messages,
+        messages: convertedMessages,
         hasMore: result.hasMore || false,
         nextToken: result.nextToken,
       };
