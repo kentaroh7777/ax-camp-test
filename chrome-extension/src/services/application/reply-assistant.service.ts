@@ -195,6 +195,12 @@ export class ReplyAssistantService implements IReplyAssistantService {
         console.log(`[ReplyAssistant] ${channel} から ${result.messages.length} 件のメッセージを取得`);
         
         const userMessages = result.messages.filter(msg => {
+          // 元メッセージと同じIDの場合は除外
+          if (msg.id === originalMessage.id) {
+            console.log(`[ReplyAssistant] 元メッセージと同じID (${msg.id}) のため除外`);
+            return false;
+          }
+          
           const isFromUser = this.isMessageFromUser(msg, channelInfo);
           console.log(`[ReplyAssistant] メッセージ判定 - from: ${msg.from}, isFromUser: ${isFromUser}`);
           return isFromUser;

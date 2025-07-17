@@ -44,39 +44,63 @@ export class LLMIntegrationService implements ILLMIntegrationService {
   }
   
   optimizePrompt(context: ReplyContext): string {
-    const { originalMessage, relatedMessages, userMapping, userPreferences } = context;
+    const { originalMessage, relatedMessages, userMapping, userPreferences, additionalPrompt } = context;
     
-    let prompt = `Please generate a ${userPreferences.tone} reply to the following message:\n\n`;
-    prompt += `Original Message:\n`;
-    prompt += `From: ${originalMessage.from}\n`;
-    prompt += `Channel: ${originalMessage.channel}\n`;
-    prompt += `Content: ${originalMessage.content}\n\n`;
+    console.log('[LLM] optimizePrompt開始');
+    console.log('[LLM] additionalPrompt:', additionalPrompt);
+    
+    let prompt = `# メッセージ返信生成タスク\n\n`;
+    prompt += `以下のメッセージに対する**${userPreferences.tone}**な返信を生成してください。\n\n`;
+    
+    prompt += `## 元メッセージ\n\n`;
+    prompt += `- **送信者**: ${originalMessage.from}\n`;
+    prompt += `- **チャンネル**: ${originalMessage.channel}\n`;
+    prompt += `- **内容**:\n\n`;
+    prompt += `\`\`\`\n${originalMessage.content}\n\`\`\`\n\n`;
     
     if (userMapping) {
-      prompt += `User Information:\n`;
-      prompt += `Name: ${userMapping.name}\n`;
-      prompt += `Tags: ${userMapping.tags.join(', ')}\n`;
-      prompt += `Priority: ${userMapping.priority}\n\n`;
+      prompt += `## ユーザー情報\n\n`;
+      prompt += `- **名前**: ${userMapping.name}\n`;
+      prompt += `- **タグ**: ${userMapping.tags.join(', ')}\n`;
+      prompt += `- **優先度**: ${userMapping.priority}\n\n`;
     }
     
     if (relatedMessages.length > 0) {
-      prompt += `Related Messages:\n`;
+      prompt += `## 関連メッセージ\n\n`;
+      prompt += `同一人物からの他チャンネルでの最近のメッセージ：\n\n`;
       relatedMessages.forEach((msg, index) => {
-        prompt += `${index + 1}. ${msg.content}\n`;
+        prompt += `${index + 1}. **[${msg.channel}]** ${msg.content}\n`;
       });
       prompt += `\n`;
     }
     
     if (userPreferences.includeContext && context.conversationHistory.length > 0) {
-      prompt += `Conversation History:\n`;
+      prompt += `## 会話履歴\n\n`;
       context.conversationHistory.slice(-3).forEach((msg, index) => {
-        prompt += `${index + 1}. ${msg.from}: ${msg.content}\n`;
+        prompt += `${index + 1}. **${msg.from}**: ${msg.content}\n`;
       });
       prompt += `\n`;
     }
     
-    prompt += `Please respond in ${userPreferences.language}.\n`;
-    prompt += `Keep the response appropriate for ${originalMessage.channel} channel.`;
+    // 追加指示がある場合は重要度を高めて処理
+    if (additionalPrompt && additionalPrompt.trim()) {
+      console.log('[LLM] 追加指示を追加:', additionalPrompt.trim());
+      prompt += `## ⚠️ 重要な追加指示\n\n`;
+      prompt += `> ${additionalPrompt.trim()}\n\n`;
+      prompt += `**必ず上記の追加指示に従って返信案を作成してください。**\n\n`;
+    }
+    
+    prompt += `## 返信要件\n\n`;
+    prompt += `- **言語**: ${userPreferences.language}\n`;
+    prompt += `- **チャンネル**: ${originalMessage.channel}に適した形式\n`;
+    prompt += `- **トーン**: ${userPreferences.tone}\n`;
+    prompt += `- **文字数**: 簡潔で要点を抑えた内容（200文字以内推奨）\n\n`;
+    
+    prompt += `## 出力形式\n\n`;
+    prompt += `返信案のテキストのみを出力してください（説明や補足は不要）。`;
+    
+    console.log('[LLM] 生成されたプロンプト:');
+    console.log(prompt);
     
     return prompt;
   }
@@ -153,27 +177,15 @@ export class LLMIntegrationService implements ILLMIntegrationService {
 メッセージのチャンネル別の特徴：
 - Gmail: フォーマルなビジネスメール調
 - Discord: 少しカジュアルだが丁寧な口調
-- LINE: 親しみやすく簡潔な表現（絵文字使用可）
-
-返信案は200文字以内で簡潔に作成してください。`;
+- LINE: 親しみやすく簡潔な表現（絵文字使用可）`;
   }
 
   private buildUserPrompt(prompt: string, context: any): string {
-    let userPrompt = '以下のメッセージに対する適切な返信案を日本語で作成してください。\n\n';
+    console.log('[LLM] buildUserPrompt開始');
+    console.log('[LLM] 受信したprompt:', prompt);
     
-    if (context?.originalMessage) {
-      const message = context.originalMessage;
-      userPrompt += `**受信メッセージ情報:**\n`;
-      userPrompt += `送信者: ${message.from || '不明'}\n`;
-      userPrompt += `チャンネル: ${message.channel || '不明'}\n`;
-      userPrompt += `内容: ${message.content || prompt}\n\n`;
-    } else {
-      userPrompt += `**メッセージ内容:**\n${prompt}\n\n`;
-    }
-    
-    userPrompt += '適切な返信案を作成してください。';
-    
-    return userPrompt;
+    // プロンプトをそのまま返す（余計な編集はしない）
+    return prompt;
   }
 
   private async mockLLMGeneration(prompt: string, context: any): Promise<string> {

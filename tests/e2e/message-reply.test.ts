@@ -619,4 +619,186 @@ test.describe('Chrome Extension Message Reply AI Generation Tests', () => {
       throw error;
     }
   });
+
+  test('追加指示機能テスト', async () => {
+    console.log('📝 追加指示機能テスト開始');
+
+    const page = await context.newPage();
+    const popupUrl = `chrome-extension://${extensionId}/popup.html`;
+    
+    const consoleLogs: string[] = [];
+    page.on('console', (msg: ConsoleMessage) => {
+      consoleLogs.push(`${msg.type()}: ${msg.text()}`);
+    });
+    
+    try {
+      await page.goto(popupUrl);
+      await page.waitForTimeout(3000);
+
+      // メッセージを取得
+      const refreshButton = await page.locator('button:has-text("確認開始")').first();
+      if (await refreshButton.count() > 0) {
+        await refreshButton.click();
+        await page.waitForTimeout(5000);
+      }
+
+      // 最初のメッセージの返信ボタンをクリック
+      const firstReplyButton = await page.locator('.ant-list-item button').filter({ hasText: /返[\s]*信/ }).first();
+      
+      if (await firstReplyButton.count() > 0) {
+        console.log('📧 返信ボタンをクリック');
+        await firstReplyButton.click();
+        await page.waitForTimeout(2000);
+        
+        // 返信モーダルが開いているか確認
+        const replyModal = await page.locator('.ant-modal, .reply-modal').first();
+        expect(await replyModal.count()).toBeGreaterThan(0);
+        console.log('✅ 返信モーダルが開きました');
+        
+        // 追加指示のテキストエリアを見つけて入力
+        const additionalPromptTextarea = await page.locator('textarea').filter({ hasText: /追加指示/ }).or(
+          page.locator('textarea[placeholder*="追加指示"]')
+        ).first();
+        
+        if (await additionalPromptTextarea.count() === 0) {
+          // プレースホルダーで検索
+          const allTextareas = await page.locator('textarea').all();
+          console.log('📝 利用可能なテキストエリア数:', allTextareas.length);
+          
+          for (let i = 0; i < allTextareas.length; i++) {
+            const placeholder = await allTextareas[i].getAttribute('placeholder');
+            console.log(`📝 テキストエリア ${i + 1} placeholder:`, placeholder);
+          }
+          
+          // 2番目のテキストエリアを追加指示用として使用
+          if (allTextareas.length >= 2) {
+            console.log('📝 2番目のテキストエリアに追加指示を入力');
+            await allTextareas[1].fill('CNPトレカアプリ開発の件を返信文に挿入');
+            
+            // 入力後のスクリーンショット
+            await page.screenshot({ 
+              path: 'tests/e2e/screenshots/additional-prompt-input.png',
+              fullPage: true
+            });
+            
+            console.log('📝 追加指示入力完了');
+            
+            // AI再生成ボタンをクリック
+            const aiRegenerateButton = await page.locator('button:has-text("AI再生成")').first();
+            if (await aiRegenerateButton.count() > 0) {
+              console.log('🤖 AI再生成ボタンをクリック');
+              await aiRegenerateButton.click();
+              
+              // 生成完了まで待機
+              await page.waitForTimeout(8000);
+              
+              // 最終状態のスクリーンショット
+              await page.screenshot({ 
+                path: 'tests/e2e/screenshots/additional-prompt-result.png',
+                fullPage: true
+              });
+              
+              console.log('🔍 追加指示関連のコンソールログ:');
+              const additionalPromptLogs = consoleLogs.filter(log => 
+                log.includes('additionalPrompt') || 
+                log.includes('追加指示') ||
+                log.includes('LLM') ||
+                log.includes('buildUserPrompt') ||
+                log.includes('optimizePrompt') ||
+                log.includes('CNP')
+              );
+              
+              if (additionalPromptLogs.length > 0) {
+                additionalPromptLogs.forEach((log, index) => {
+                  console.log(`   📝 ${index + 1}: ${log}`);
+                });
+              } else {
+                console.log('⚠️ 追加指示関連のログが見つかりません');
+                
+                // 最新のログを表示
+                console.log('📝 最新30件のコンソールログ:');
+                consoleLogs.slice(-30).forEach((log, index) => {
+                  console.log(`   📝 ${index + 1}: ${log}`);
+                });
+              }
+              
+              console.log('✅ 追加指示機能テスト完了');
+            } else {
+              console.log('⚠️ AI再生成ボタンが見つかりません');
+            }
+          } else {
+            console.log('⚠️ 追加指示用のテキストエリアが見つかりません');
+          }
+        } else {
+          console.log('📝 追加指示テキストエリアを発見、入力中...');
+          await additionalPromptTextarea.fill('CNPトレカアプリ開発の件を返信文に挿入');
+          
+          // 入力後のスクリーンショット
+          await page.screenshot({ 
+            path: 'tests/e2e/screenshots/additional-prompt-input-found.png',
+            fullPage: true
+          });
+          
+          console.log('📝 追加指示入力完了');
+          
+          // AI再生成ボタンをクリック
+          const aiRegenerateButton = await page.locator('button:has-text("AI再生成")').first();
+          if (await aiRegenerateButton.count() > 0) {
+            console.log('🤖 AI再生成ボタンをクリック');
+            await aiRegenerateButton.click();
+            
+            // 生成完了まで待機
+            await page.waitForTimeout(8000);
+            
+            // 最終状態のスクリーンショット
+            await page.screenshot({ 
+              path: 'tests/e2e/screenshots/additional-prompt-result-found.png',
+              fullPage: true
+            });
+            
+            console.log('🔍 追加指示関連のコンソールログ:');
+            const additionalPromptLogs = consoleLogs.filter(log => 
+              log.includes('additionalPrompt') || 
+              log.includes('追加指示') ||
+              log.includes('LLM') ||
+              log.includes('buildUserPrompt') ||
+              log.includes('optimizePrompt') ||
+              log.includes('CNP')
+            );
+            
+            if (additionalPromptLogs.length > 0) {
+              additionalPromptLogs.forEach((log, index) => {
+                console.log(`   📝 ${index + 1}: ${log}`);
+              });
+            } else {
+              console.log('⚠️ 追加指示関連のログが見つかりません');
+              
+              // 最新のログを表示
+              console.log('📝 最新30件のコンソールログ:');
+              consoleLogs.slice(-30).forEach((log, index) => {
+                console.log(`   📝 ${index + 1}: ${log}`);
+              });
+            }
+            
+            console.log('✅ 追加指示機能テスト完了');
+          } else {
+            console.log('⚠️ AI再生成ボタンが見つかりません');
+          }
+        }
+
+      } else {
+        console.log('⚠️ 返信ボタンが見つかりません');
+      }
+
+    } catch (error) {
+      console.error('❌ 追加指示機能テストエラー:', error);
+      
+      await page.screenshot({ 
+        path: 'tests/e2e/screenshots/additional-prompt-test-error.png',
+        fullPage: true
+      });
+      
+      throw error;
+    }
+  });
 }); 

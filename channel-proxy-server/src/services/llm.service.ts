@@ -34,7 +34,9 @@ export class LLMService {
   }
 
   async generateReply(request: LLMGenerationRequest): Promise<LLMGenerationResponse> {
-    console.log('[LLM Service] 返信生成リクエスト受信:', request);
+    console.log('🔍 [LLM Service] ===== LLM生成リクエスト詳細ログ開始 =====');
+    console.log('📥 [LLM Service] 受信したリクエスト:', JSON.stringify(request, null, 2));
+    console.log('📝 [LLM Service] 受信したプロンプト全文:', request.prompt);
 
     if (!this.apiKey) {
       console.error('[LLM Service] APIキーが設定されていません');
@@ -46,7 +48,11 @@ export class LLMService {
 
     try {
       const systemPrompt = this.buildSystemPrompt(request.context);
-      const userPrompt = this.buildUserPrompt(request.prompt, request.context);
+      console.log('🎯 [LLM Service] システムプロンプト:', systemPrompt);
+      
+      // Chrome拡張機能から送信されたプロンプトをそのまま使用
+      const userPrompt = request.prompt;
+      console.log('👤 [LLM Service] ユーザープロンプト（そのまま使用）:', userPrompt);
 
       const requestBody = {
         model: "claude-3-5-sonnet-20241022",
@@ -60,6 +66,7 @@ export class LLMService {
         ]
       };
 
+      console.log('🚀 [LLM Service] Claude APIリクエスト本文:', JSON.stringify(requestBody, null, 2));
       console.log('[LLM Service] Claude APIにリクエスト送信...');
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -84,6 +91,7 @@ export class LLMService {
       }
 
       const data = await response.json() as any;
+      console.log('📥 [LLM Service] Claude API 生レスポンス:', JSON.stringify(data, null, 2));
       
       if (!data.content || !data.content[0] || !data.content[0].text) {
         console.error('[LLM Service] 無効なレスポンス構造:', data);
@@ -94,10 +102,15 @@ export class LLMService {
       }
 
       const rawReply = data.content[0].text.trim();
+      console.log('📝 [LLM Service] Claude API 生出力テキスト:', rawReply);
+      
       const cleanedReply = this.cleanReplyText(rawReply);
+      console.log('✨ [LLM Service] クリーニング後の返信:', cleanedReply);
+      
       const tokensUsed = data.usage?.input_tokens + data.usage?.output_tokens || 0;
+      console.log('📊 [LLM Service] 使用トークン数:', tokensUsed);
 
-      console.log('[LLM Service] 返信生成成功:', cleanedReply);
+      console.log('✅ [LLM Service] ===== LLM生成成功 =====');
 
       return {
         success: true,
@@ -106,7 +119,7 @@ export class LLMService {
       };
 
     } catch (error) {
-      console.error('[LLM Service] エラー:', error);
+      console.error('❌ [LLM Service] エラー:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : '不明なエラー'
@@ -137,24 +150,6 @@ export class LLMService {
 - LINE: 親しみやすく簡潔な表現（絵文字使用可）
 
 返信案は200文字以内で簡潔に作成してください。`;
-  }
-
-  private buildUserPrompt(prompt: string, context: any): string {
-    let userPrompt = '以下のメッセージに対する適切な返信案を日本語で作成してください。\n\n';
-    
-    if (context?.originalMessage) {
-      const message = context.originalMessage;
-      userPrompt += `**受信メッセージ情報:**\n`;
-      userPrompt += `送信者: ${message.from || '不明'}\n`;
-      userPrompt += `チャンネル: ${message.channel || '不明'}\n`;
-      userPrompt += `内容: ${message.content || prompt}\n\n`;
-    } else {
-      userPrompt += `**メッセージ内容:**\n${prompt}\n\n`;
-    }
-    
-    userPrompt += '注意：返信文のみを出力してください。説明文や解説は一切不要です。';
-    
-    return userPrompt;
   }
 
   private cleanReplyText(text: string): string {
