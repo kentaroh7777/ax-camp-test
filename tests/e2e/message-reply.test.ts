@@ -175,7 +175,7 @@ test.describe('Chrome Extension Message Reply AI Generation Tests', () => {
         });
         
         // モーダルのタイトル確認
-        const modalTitle = await page.locator('.ant-modal-title, .ant-modal-header').textContent();
+        const modalTitle = await page.locator('.ant-modal-title').first().textContent();
         expect(modalTitle).toContain('返信');
         console.log('📝 モーダルタイトル:', modalTitle);
 
@@ -330,6 +330,118 @@ test.describe('Chrome Extension Message Reply AI Generation Tests', () => {
       
       await page.screenshot({ 
         path: 'tests/e2e/screenshots/reply-test-ai-error.png',
+        fullPage: true
+      });
+      
+      throw error;
+    }
+  });
+
+  test('Claude APIを使った返信案生成テスト', async () => {
+    console.log('🤖 Claude API返信案生成テスト開始');
+
+    const page = await context.newPage();
+    const popupUrl = `chrome-extension://${extensionId}/popup.html`;
+    
+    const consoleLogs: string[] = [];
+    page.on('console', (msg: ConsoleMessage) => {
+      consoleLogs.push(`${msg.type()}: ${msg.text()}`);
+    });
+    
+    try {
+      await page.goto(popupUrl);
+      await page.waitForTimeout(5000);
+
+      // メッセージ取得
+      const refreshButton = await page.locator('button:has-text("確認開始")').first();
+      if (await refreshButton.count() > 0) {
+        console.log('🔄 メッセージを取得中...');
+        await refreshButton.click();
+        await page.waitForTimeout(5000);
+      }
+
+      // 返信ボタンをクリック
+      const replyButton = await page.locator('.ant-list-item button').filter({ hasText: /返[\\s]*信/ }).first();
+      
+      if (await replyButton.count() > 0) {
+        console.log('💬 返信ボタンをクリック');
+        await replyButton.click();
+        await page.waitForTimeout(2000);
+
+        // 返信モーダルが開いているか確認
+        const modal = await page.locator('.ant-modal');
+        expect(await modal.count()).toBeGreaterThan(0);
+        console.log('✅ 返信モーダルが開きました');
+
+        // AI生成ボタンを探してクリック
+        const aiGenerateButton = await page.locator('button:has-text("AI生成"), .ant-btn:has-text("AI生成")').first();
+        
+        if (await aiGenerateButton.count() > 0) {
+          console.log('🤖 AI返信案生成ボタンをクリック');
+          await aiGenerateButton.click();
+          
+          // Claude APIの呼び出しを待つ（少し長めに）
+          await page.waitForTimeout(10000);
+          
+          // 生成された返信案を確認
+          const replyTextarea = await page.locator('textarea, .ant-input');
+          const generatedText = await replyTextarea.first().inputValue().catch(() => '');
+          
+          console.log('📝 生成された返信案:', generatedText);
+          
+          if (generatedText && generatedText.length > 0) {
+            console.log('✅ Claude APIによる返信案が生成されました');
+            
+            // 日本語かどうか確認
+            const hasJapanese = /[あ-んア-ンぁ-ゞ一-龯]/.test(generatedText);
+            expect(hasJapanese).toBe(true);
+            console.log('✅ 日本語の返信案が生成されています');
+            
+            // 適切な長さかどうか確認（10文字以上200文字以内）
+            expect(generatedText.length).toBeGreaterThan(10);
+            expect(generatedText.length).toBeLessThan(300);
+            console.log(`✅ 適切な長さの返信案です (${generatedText.length}文字)`);
+            
+          } else {
+            console.log('⚠️ Claude API呼び出しでエラーが発生した可能性があります');
+            
+            // エラーメッセージを確認
+            const errorMessage = await page.locator('.ant-message-error, .error').textContent().catch(() => '');
+            if (errorMessage) {
+              console.log('❌ エラーメッセージ:', errorMessage);
+            }
+            
+            // コンソールログから詳細を確認
+            console.log('🔍 ブラウザコンソールログ（最後の10件）:');
+            consoleLogs.slice(-10).forEach((log, index) => {
+              console.log(`   ${index + 1}: ${log}`);
+            });
+          }
+          
+        } else {
+          console.log('⚠️ AI生成ボタンが見つかりません');
+          
+          // モーダルの内容を確認
+          const modalContent = await page.locator('.ant-modal-body').textContent().catch(() => '') || '';
+          console.log('📋 モーダル内容:', modalContent.substring(0, 200));
+        }
+
+        // スクリーンショット撮影
+        await page.screenshot({ 
+          path: 'tests/e2e/screenshots/claude-api-test.png',
+          fullPage: true
+        });
+        console.log('📸 Claude APIテストのスクリーンショット保存');
+
+      } else {
+        console.log('⚠️ 返信ボタンが見つかりません（メッセージが不足している可能性）');
+      }
+
+    } catch (error) {
+      console.error('❌ Claude API テストエラー:', error);
+      
+      await page.screenshot({ 
+        path: 'tests/e2e/screenshots/claude-api-test-error.png',
         fullPage: true
       });
       

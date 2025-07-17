@@ -34,18 +34,30 @@ export const ReplyModal: React.FC<ReplyModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('[ReplyModal] useEffect呼び出し - visible:', visible, 'message:', message);
+    
     if (visible && message) {
+      console.log('[ReplyModal] 条件満たすため、返信生成を開始');
       setError(null);
       setReplyContent('');
       setGeneratedReply('');
       generateReply();
       fetchRelatedMessages();
+    } else {
+      console.log('[ReplyModal] 条件を満たさないため、処理をスキップ');
     }
   }, [visible, message]);
 
   const generateReply = async () => {
-    if (!message) return;
+    console.log('[ReplyModal] generateReply呼び出し開始');
+    console.log('[ReplyModal] message:', message);
     
+    if (!message) {
+      console.log('[ReplyModal] messageがnullのため、generateReplyを終了');
+      return;
+    }
+    
+    console.log('[ReplyModal] 返信生成を開始...');
     setGenerating(true);
     setError(null);
     
@@ -62,17 +74,26 @@ export const ReplyModal: React.FC<ReplyModalProps> = ({
         },
       };
 
+      console.log('[ReplyModal] ReplyContextを作成:', context);
+      console.log('[ReplyModal] replyAssistantService.generateReply呼び出し...');
+      
       const result = await replyAssistantService.generateReply(context);
+      
+      console.log('[ReplyModal] generateReply結果:', result);
+      
       if (result.success) {
+        console.log('[ReplyModal] 返信生成成功:', result.reply);
         setGeneratedReply(result.reply);
         setReplyContent(result.reply);
       } else {
+        console.error('[ReplyModal] 返信生成失敗:', result.error);
         setError(result.error?.message || 'AI返信の生成に失敗しました');
       }
     } catch (error) {
-      console.error('Failed to generate reply:', error);
+      console.error('[ReplyModal] generateReplyでエラー:', error);
       setError('返信生成中にエラーが発生しました');
     } finally {
+      console.log('[ReplyModal] generateReply処理完了');
       setGenerating(false);
     }
   };

@@ -6,6 +6,7 @@ import { router as lineApiRouter } from './line-api.routes.js';
 import { router as webhookRouter } from './webhook.routes.js';
 import discordRouter from './discord.routes.js';
 import gmailRouter from './gmail-api.routes.js';
+import llmRouter from './llm.routes.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/line', lineApiRouter);
 router.use('/webhook', webhookRouter);
 router.use('/discord', discordRouter);
 router.use('/gmail', gmailRouter);
+router.use('/llm', llmRouter);
 
 export { router as indexRoutes };
