@@ -44,7 +44,7 @@ export class ReplyAssistantService implements IReplyAssistantService {
         
         const result = await client.getMessages({ 
           unreadOnly: true, 
-          limit: 50 
+          limit: 2  // 各チャンネル最大2件に制限
         });
         
         return {

@@ -8,8 +8,8 @@
       "name": "Gmail認証状態確認",
       "status": "passed",
       "message": "認証状態は有効です",
-      "duration": 615,
-      "timestamp": "2025-07-17T08:06:16.203Z"
+      "duration": 0,
+      "timestamp": "2025-07-17T09:05:06.229Z"
     },
     {
       "name": "本実装メッセージ取得",
@@ -19,8 +19,8 @@
       "unreadCount": 10,
       "implementation": "本実装GmailService",
       "authMethod": ".env.local設定",
-      "duration": 1228,
-      "timestamp": "2025-07-17T08:06:17.433Z"
+      "duration": 1169,
+      "timestamp": "2025-07-17T09:05:07.401Z"
     },
     {
       "name": "本実装メッセージ処理確認",
@@ -33,15 +33,15 @@
         "convertGmailToMessage",
         "extractEmailContent"
       ],
-      "duration": 819,
-      "timestamp": "2025-07-17T08:06:18.252Z"
+      "duration": 750,
+      "timestamp": "2025-07-17T09:05:08.152Z"
     },
     {
       "name": "Discord Message Send",
       "status": "passed",
       "message": "Successfully sent message to channel 1394492451317878804",
-      "duration": 395,
-      "timestamp": "2025-07-17T08:06:18.649Z"
+      "duration": 439,
+      "timestamp": "2025-07-17T09:05:08.595Z"
     },
     {
       "name": "Discord Message Retrieval",
@@ -49,22 +49,22 @@
       "message": "Discordメッセージ取得は現在未サポート (空リスト返却)",
       "messageCount": 0,
       "duration": 5,
-      "timestamp": "2025-07-17T08:06:18.654Z"
+      "timestamp": "2025-07-17T09:05:08.601Z"
     },
     {
       "name": "LINE Message Send",
       "status": "passed",
       "message": "Successfully sent message to user Uef5b6811e0ea47b39726288d1f867532",
-      "duration": 203,
-      "timestamp": "2025-07-17T08:06:18.858Z"
+      "duration": 139,
+      "timestamp": "2025-07-17T09:05:08.742Z"
     },
     {
       "name": "LINE Message Retrieval",
       "status": "passed",
-      "message": "Successfully retrieved 1 LINE messages",
-      "messageCount": 1,
-      "duration": 5,
-      "timestamp": "2025-07-17T08:06:18.864Z"
+      "message": "Successfully retrieved 0 LINE messages",
+      "messageCount": 0,
+      "duration": 7,
+      "timestamp": "2025-07-17T09:05:08.749Z"
     }
   ]
 }

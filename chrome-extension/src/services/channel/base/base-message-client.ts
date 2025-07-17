@@ -19,12 +19,12 @@ export abstract class BaseMessageClient implements IMessageClient {
   abstract authenticate(credentials?: any): Promise<AuthResult>;
   
   async isAuthenticated(): Promise<boolean> {
-    // プロキシサーバーの認証が無効の場合はスキップ
+    // プロキシサーバーベースのチャンネルかつ認証が無効の場合はスキップ
     const proxyAuthEnabled = process.env.PROXY_AUTH_ENABLE;
     console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - PROXY_AUTH_ENABLE:`, proxyAuthEnabled);
     
-    if (proxyAuthEnabled === 'false') {
-      console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - Auth bypassed, returning true`);
+    if (this.isProxyBasedChannel() && proxyAuthEnabled === 'false') {
+      console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - Proxy auth bypassed, returning true`);
       return true;
     }
     
@@ -49,11 +49,25 @@ export abstract class BaseMessageClient implements IMessageClient {
   }
   
   protected abstract getChannelName(): string;
+
+  /**
+   * プロキシサーバー経由でアクセスするチャンネルかどうかを判定
+   */
+  protected isProxyBasedChannel(): boolean {
+    // プロキシサーバー経由でアクセスするチャンネルを指定
+    // 注: PoCレベルではGmailもプロキシサーバー経由でアクセス
+    return this.channel === ChannelType.DISCORD || 
+           this.channel === ChannelType.LINE || 
+           this.channel === ChannelType.GMAIL;
+  }
   
   protected async getValidToken(): Promise<string> {
-    // プロキシサーバーの認証が無効の場合はダミートークンを返す
+    // プロキシサーバーベースのチャンネルかつ認証が無効の場合はダミートークンを返す
     const proxyAuthEnabled = process.env.PROXY_AUTH_ENABLE;
-    if (proxyAuthEnabled === 'false') {
+    console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - PROXY_AUTH_ENABLE:`, proxyAuthEnabled);
+    
+    if (this.isProxyBasedChannel() && proxyAuthEnabled === 'false') {
+      console.log(`BaseMessageClient.isAuthenticated: ${this.channel} - Proxy auth bypassed, returning dummy token`);
       return 'dummy-token';
     }
     

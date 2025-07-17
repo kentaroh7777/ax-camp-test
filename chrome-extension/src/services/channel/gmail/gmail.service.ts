@@ -8,7 +8,7 @@ import { Message } from '../../../types/core/message.types';
 import { IAuthTokenManager } from '../../../types/infrastructure/auth.types';
 
 export class GmailService extends BaseMessageClient {
-  private readonly baseUrl = 'https://gmail.googleapis.com/gmail/v1';
+  private readonly baseUrl = process.env.PROXY_SERVER_URL || 'http://localhost:3000';
   
   constructor(authTokenManager: IAuthTokenManager) {
     super(authTokenManager, ChannelType.GMAIL);
@@ -22,35 +22,42 @@ export class GmailService extends BaseMessageClient {
     try {
       const token = await this.getValidToken();
       
-      // Create Gmail API message format
-      const emailContent = this.createEmailContent(params);
+      // Create proxy server send request format
+      const sendRequest = {
+        to: params.to,
+        subject: 'Message from Chrome Extension',
+        content: params.content,
+        isHtml: params.content.includes('<') && params.content.includes('>'),
+      };
       
-      const response = await fetch(`${this.baseUrl}/users/me/messages/send`, {
+      const response = await fetch(`${this.baseUrl}/api/gmail/send`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          raw: btoa(emailContent).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
-        }),
+        body: JSON.stringify(sendRequest),
       });
       
       if (!response.ok) {
-        throw new Error(`Gmail API error: ${response.status} ${response.statusText}`);
+        throw new Error(`Proxy server error: ${response.status} ${response.statusText}`);
       }
       
       const result = await response.json();
       
+      if (!result.success) {
+        throw new Error(`Gmail API via proxy error: ${result.error}`);
+      }
+      
       return {
         success: true,
-        messageId: result.id,
+        messageId: result.data.messageId,
       };
     } catch (error) {
       return {
         success: false,
         error: {
-          code: 'GMAIL_SEND_ERROR',
+          code: 'GMAIL_PROXY_SEND_ERROR',
           message: error instanceof Error ? error.message : 'Unknown error',
         },
       };
@@ -59,59 +66,82 @@ export class GmailService extends BaseMessageClient {
   
   async getMessages(params: GetMessagesParams): Promise<GetMessagesResult> {
     try {
+      console.log('GmailService.getMessages: Starting request...');
       const token = await this.getValidToken();
+      console.log('GmailService.getMessages: Token obtained:', token.substring(0, 20) + '...');
       
-      // Build Gmail API query parameters
+      // Build proxy server query parameters
       const queryParams = new URLSearchParams({
-        maxResults: (params.limit || 50).toString(),
+        limit: (params.limit || 50).toString(),
+        unreadOnly: params.unreadOnly ? 'true' : 'false',
       });
       
-      if (params.unreadOnly) {
-        queryParams.append('labelIds', 'UNREAD');
-      }
+      const url = `${this.baseUrl}/api/gmail/messages?${queryParams}`;
+      console.log('GmailService.getMessages: Requesting URL:', url);
       
-      const response = await fetch(`${this.baseUrl}/users/me/messages?${queryParams}`, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
       
+      console.log('GmailService.getMessages: Response status:', response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error(`Gmail API error: ${response.status} ${response.statusText}`);
+        throw new Error(`Proxy server error: ${response.status} ${response.statusText}`);
       }
       
       const result = await response.json();
-      const messages: Message[] = [];
+      console.log('GmailService.getMessages: Response result:', result);
       
-      // Fetch message details in parallel
-      if (result.messages) {
-        const messageDetails = await Promise.all(
-          result.messages.map((msg: any) => this.getMessageDetail(msg.id, token))
-        );
-        
-        messages.push(...messageDetails.filter(msg => msg !== null));
+      if (!result.success) {
+        throw new Error(`Gmail API via proxy error: ${result.error}`);
       }
+      
+      // プロキシサーバーからの統一フォーマットをChrome拡張Message形式に変換
+      const messages: Message[] = result.data.messages.map((proxyMessage: any) => 
+        this.convertProxyToMessage(proxyMessage)
+      );
       
       return {
         success: true,
         messages,
-        hasMore: !!result.nextPageToken,
-        nextToken: result.nextPageToken,
+        hasMore: result.data.hasMore || false,
+        nextToken: result.data.nextPageToken,
       };
     } catch (error) {
+      console.error('GmailService.getMessages: Error:', error);
       return {
         success: false,
         messages: [],
         hasMore: false,
         error: {
-          code: 'GMAIL_FETCH_ERROR',
+          code: 'GMAIL_PROXY_ERROR',
           message: error instanceof Error ? error.message : 'Unknown error',
         },
       };
     }
   }
-  
+
+  /**
+   * プロキシサーバーからのレスポンスをMessage形式に変換
+   */
+  private convertProxyToMessage(proxyMessage: any): Message {
+    return {
+      id: proxyMessage.id,
+      from: proxyMessage.from,
+      to: proxyMessage.to || 'me',
+      content: proxyMessage.content,
+      timestamp: new Date(proxyMessage.timestamp),
+      isUnread: proxyMessage.isUnread,
+      channel: ChannelType.GMAIL,
+      threadId: proxyMessage.threadId,
+      raw: proxyMessage.raw,
+    };
+  }
+
   async authenticate(credentials?: any): Promise<AuthResult> {
     try {
       // 非Chrome拡張機能環境での認証（テスト・結合テスト用）
