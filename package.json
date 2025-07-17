@@ -14,7 +14,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "npm run lint --workspace=chrome-extension",
-    "type-check": "npm run type-check --workspace=chrome-extension"
+    "type-check": "npm run type-check --workspace=chrome-extension",
+    "setup:channels": "npx tsx scripts/setup-channels.ts",
+    "setup:demo-users": "npx tsx scripts/setup-demo-users.ts",
+    "proxy:start": "./scripts/proxy-server.sh start",
+    "proxy:stop": "./scripts/proxy-server.sh stop",
+    "proxy:restart": "./scripts/proxy-server.sh restart",
+    "proxy:status": "./scripts/proxy-server.sh status",
+    "proxy:logs": "./scripts/proxy-server.sh logs"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.1",
@@ -26,7 +33,8 @@
     "jsdom": "^23.2.0",
     "react-test-renderer": "^18.2.0",
     "typescript": "^5.0.0",
-    "vitest": "^1.6.1"
+    "vitest": "^1.6.1",
+    "tsx": "^4.6.0"
   },
   "engines": {
     "node": ">=18.0.0"
