@@ -6,6 +6,10 @@ AI-powered unified reply assistant for Gmail, Discord, and LINE
 
 Multi-Channel Reply Assistant は、Gmail、Discord、LINE の3つのチャンネルを統合し、AI による返信支援を提供する Chrome 拡張機能です。
 
+- こちらの動画もご覧ください
+https://youtu.be/UkSqxUgGLQY
+
+
 ## クイックスタート
 ```bash
 npm install
@@ -16,7 +20,6 @@ npm install --workspace=chrome-extension
 ngrok http 3000
 ```
 「chrome拡張機能インストール」節を参照してインストール
-
 
 ## 主な機能
 
